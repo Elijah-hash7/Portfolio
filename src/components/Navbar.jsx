@@ -1,25 +1,39 @@
-const Navbar = () => {
+import { SunIcon, MoonIcon } from '@heroicons/react/24/solid';
+
+
+const Navbar = ({ isDarkMode, toggleDarkMode }) => {
     return (
-      <div className="shadow-sm sticky top-0 z-50 bg-gray-900">
-        <div className="max-w-6xl px-10">
-          <div className="flex items-center justify-between h-16">
-            {/* Left side - Group Agent 48 and Name */}
-            <div className="flex items-center space-x-50">
-              <h1 className="text-white text-lg font-semibold">✱ Agent 48</h1>
-              <h1 className="text-white text-lg hidden sm:block">Idorenyin Udoh</h1>
-            </div>
-  
-            {/* Right side - Toggle button */}
-            <div className="flex-shrink-0">
-              <div className="w-10 h-10 bg-gray-700 rounded-full flex items-center justify-center cursor-pointer hover:bg-gray-600">
-                <span className="text-white text-sm">🌙</span>
-              </div>
-            </div>
-          </div>
+        <div className='pt-4 '>
+            <nav className={isDarkMode ? 'bg-gray-900' : 'bg-white'}>
+                <div className="max-w-6xl mx-auto px-6 py-4">
+                    <div className="flex justify-between items-center">
+                        <div className="flex items-center ">
+                            <h1 className={isDarkMode ? 'text-white  text-2xl font-semibold' : 'text-gray-900 text-2xl font-semibold'}>
+                                Elijah.hash
+                            </h1>
+                            <span className={`text-2xl mx-32 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                                Emmanuel Elijah
+                            </span>
+                        </div>
+                        <div
+                            onClick={toggleDarkMode}
+                            className={`w-10 h-10 rounded-full flex items-center justify-center cursor-pointer transition-colors ${isDarkMode ? 'bg-gray-800 hover:bg-gray-700' : 'bg-gray-200 hover:bg-gray-300'
+                                }`}
+                        >
+                            {isDarkMode ? (
+                                <MoonIcon className="w-5 h-5 text-yellow-400" />
+                            ) : (
+                                <SunIcon className="w-5 h-5 text-yellow-500" />
+                            )}
+                        </div>
+                    </div>
+                </div>
+            </nav>
+
         </div>
-      </div>
-    );
-  };
-  
-  export default Navbar;
-  
+
+
+    )
+}
+
+export default Navbar;
