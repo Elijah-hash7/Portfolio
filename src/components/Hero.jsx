@@ -4,8 +4,14 @@ const Hero = ({ isDarkMode }) => {
     const titles = [
         "Elijah",
         "Web3 Enthusiast",
-        "Music Lover",
         "Full Stack Developer",
+        "Idea Alchemist",
+        "Psalm 143 : 10 :)",
+        "Kobe and Stephen?? The Best",
+        "User centered Developer",
+        "Code+Music = Productivity🌚",
+        "Hiphop",
+        "Not Your Average Developer",
         "BlockChain Engineer"
     ];
     
@@ -15,7 +21,7 @@ const Hero = ({ isDarkMode }) => {
     
     useEffect(() => {
         const currentWord = titles[currentTitle];
-        const speed = isDeleting ? 50 : 100;
+        const speed = isDeleting ? 60 : 120;
         
         const timer = setTimeout(() => {
             if (!isDeleting && displayText.length < currentWord.length) {
