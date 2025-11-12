@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import profilePic from '../assets/images/Profile.jpg';
 
 const Hero = ({ isDarkMode }) => {
     const titles = [
@@ -14,15 +15,15 @@ const Hero = ({ isDarkMode }) => {
         "Not Your Average Developer",
         "BlockChain Engineer"
     ];
-    
+
     const [currentTitle, setCurrentTitle] = useState(0);
     const [displayText, setDisplayText] = useState('');
     const [isDeleting, setIsDeleting] = useState(false);
-    
+
     useEffect(() => {
         const currentWord = titles[currentTitle];
         const speed = isDeleting ? 60 : 120;
-        
+
         const timer = setTimeout(() => {
             if (!isDeleting && displayText.length < currentWord.length) {
                 // Typing
@@ -39,10 +40,10 @@ const Hero = ({ isDarkMode }) => {
                 setCurrentTitle((prev) => (prev + 1) % titles.length);
             }
         }, speed);
-        
+
         return () => clearTimeout(timer);
     }, [displayText, isDeleting, currentTitle]);
-    
+
     return (
         <div className="flex items-start gap-8 mb-12">
             <div className="flex-1">
@@ -58,7 +59,11 @@ const Hero = ({ isDarkMode }) => {
             </div>
             <div className="flex-shrink-0">
                 <div className={`w-32 h-32 rounded-full flex items-center justify-center ${isDarkMode ? 'bg-gray-700' : 'bg-gray-300'}`}>
-                    <span className={isDarkMode ? 'text-gray-400' : 'text-gray-700'}>Your Pic</span>
+                    <img
+                        src={profilePic}
+                        alt="Elijah"
+                        className="w-full h-full object-cover"
+                    />
                 </div>
             </div>
         </div>
