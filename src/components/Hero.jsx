@@ -1,22 +1,62 @@
+import { useState, useEffect } from "react";
+
 const Hero = ({ isDarkMode }) => {
+    const titles = [
+        "Elijah",
+        "Web3 Enthusiast",
+        "Music Lover",
+        "Full Stack Developer",
+        "BlockChain Engineer"
+    ];
+    
+    const [currentTitle, setCurrentTitle] = useState(0);
+    const [displayText, setDisplayText] = useState('');
+    const [isDeleting, setIsDeleting] = useState(false);
+    
+    useEffect(() => {
+        const currentWord = titles[currentTitle];
+        const speed = isDeleting ? 50 : 100;
+        
+        const timer = setTimeout(() => {
+            if (!isDeleting && displayText.length < currentWord.length) {
+                // Typing
+                setDisplayText(currentWord.slice(0, displayText.length + 1));
+            } else if (!isDeleting && displayText.length === currentWord.length) {
+                // Wait before deleting
+                setTimeout(() => setIsDeleting(true), 2000);
+            } else if (isDeleting && displayText.length > 0) {
+                // Deleting
+                setDisplayText(displayText.slice(0, -1));
+            } else if (isDeleting && displayText.length === 0) {
+                // Move to next title
+                setIsDeleting(false);
+                setCurrentTitle((prev) => (prev + 1) % titles.length);
+            }
+        }, speed);
+        
+        return () => clearTimeout(timer);
+    }, [displayText, isDeleting, currentTitle]);
+    
     return (
-        <div className="flex items-start gap-8">
+        <div className="flex items-start gap-8 mb-12">
             <div className="flex-1">
-                <p className={`text-sm mb-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                    Elijahh
-                </p>
-                <h1 className={`text-3xl font-bold leading-tight ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                    Bringing Ideas and solutions into reality in the most efficient way possible.
+                <div className="h-10 md:h-12">
+                    <p className={`text-2xl ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                        {displayText}
+                        <span className="animate-pulse">|</span>
+                    </p>
+                </div>
+                <h1 className={`text-3xl md:text-5xl font-bold leading-tight mb-12 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                    Crafting seamless digital experiences through innovative web solutions and blockchain technology.
                 </h1>
             </div>
-
             <div className="flex-shrink-0">
-                <div className="w-24 h-24 bg-gray-300 rounded-full flex items-center justify-center">
-                    <span className="text-gray-600">Your Pic</span>
+                <div className={`w-32 h-32 rounded-full flex items-center justify-center ${isDarkMode ? 'bg-gray-700' : 'bg-gray-300'}`}>
+                    <span className={isDarkMode ? 'text-gray-400' : 'text-gray-700'}>Your Pic</span>
                 </div>
             </div>
         </div>
-    );
-};
+    )
+}
 
 export default Hero;
