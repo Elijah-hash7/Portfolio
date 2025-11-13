@@ -8,11 +8,9 @@ const Hero = ({ isDarkMode }) => {
         "Full Stack Developer",
         "Idea Alchemist",
         "Psalm 143 : 10 :)",
-        "Kobe and Stephen?? The Best",
+        "Code + Music = Productivity",
         "User centered Developer",
-        "Code+Music = Productivity🌚",
-        "Hiphop",
-        "Not Your Average Developer",
+        "Hiphop",      
         "BlockChain Engineer"
     ];
 
@@ -45,24 +43,24 @@ const Hero = ({ isDarkMode }) => {
     }, [displayText, isDeleting, currentTitle]);
 
     return (
-        <div className="flex items-start gap-8 mb-12">
-            <div className="flex-1">
-                <div className="h-10 md:h-12">
+        <div className="flex flex-col lg:flex-row items-center lg:items-center gap-3 mb-15 md:mb-3">
+            <div className="flex-1 max-w-4xl">
+                <div className="h-10 md:h-12 mb-2">
                     <p className={`text-2xl ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
                         {displayText}
                         <span className="animate-pulse">|</span>
                     </p>
                 </div>
-                <h1 className={`text-3xl md:text-5xl font-bold leading-tight mb-12 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                <h1 className={`text-3xl md:text-4xl lg:text-5xl mt-10 md:mt-2  font-bold leading-tight mb-12 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
                     Crafting seamless digital experiences through innovative web solutions and blockchain technology.
                 </h1>
             </div>
-            <div className="flex-shrink-0">
-                <div className={`w-32 h-32 rounded-full flex items-center justify-center ${isDarkMode ? 'bg-gray-700' : 'bg-gray-300'}`}>
+            <div className="flex-shrink-0 mt-5 lg:mt-0">
+                <div className={`w-48 h-48 md:w-56 md:h-56 rounded-full overflow-hidden transition-colors duration-300 flex items-center justify-center ${isDarkMode ? 'bg-gray-700' : 'bg-gray-300'}`}>
                     <img
                         src={profilePic}
                         alt="Elijah"
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-cover rounded-full"
                     />
                 </div>
             </div>

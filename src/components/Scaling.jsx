@@ -6,7 +6,7 @@ const Scaling = ({ isDarkMode }) => {
     return (
         <>
             {!showAllProjects ? (
-                <div className="flex flex-col md:flex-row gap-6 md:gap-12 mt-8">
+                <div className="flex flex-col md:flex-row gap-6 md:gap-12 mt-4">
                     <div>
                         <h2 className="text-xsmd:text-sm tracking-wider text-gray-500 mb-2">
                             Currently Scaling
@@ -52,7 +52,7 @@ const Scaling = ({ isDarkMode }) => {
                         </h2>
                         <button
                             onClick={() => setShowAllProjects(true)}
-                            className={`text-sm md:text-2xl underline cursor-pointer ${isDarkMode ? 'text-white' : 'text-gray-900'}`}
+                            className={`text-sm md:text-[1.125rem] underline cursor-pointer ${isDarkMode ? 'text-white' : 'text-gray-900'}`}
                         >
                             View More
                         </button>
@@ -66,7 +66,7 @@ const Scaling = ({ isDarkMode }) => {
                         </h2>
                         <button
                             onClick={() => setShowAllProjects(false)}
-                            className={`underline cursor-pointer font-bold ${isDarkMode ? 'text-gray-400' : 'text-gray-700'}`}
+                            className={`underline cursor-pointer font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}
                         >Collapse
                         </button>
                     </div>
