@@ -8,10 +8,10 @@ const Scaling = ({ isDarkMode }) => {
             {!showAllProjects ? (
                 <div className="flex flex-col md:flex-row gap-6 md:gap-12 mt-4">
                     <div>
-                        <h2 className="text-xsmd:text-sm tracking-wider text-gray-500 mb-2">
+                        <h2 className="font-sans text-xs md:text-sm tracking-wider text-gray-500 mb-2">
                             Currently Scaling
                         </h2>
-                        <p className={`text-sm md:text-base ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                        <p className={`font-sans text-sm md:text-base ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
                             AI & Blockchain Skills
                         </p>
                     </div>
@@ -61,7 +61,7 @@ const Scaling = ({ isDarkMode }) => {
             ) : (
                 <div className="mt-12">
                     <div className="flex justify-between items-center mb-6">
-                        <h2 className={`text-sm md:text-xl md:text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                        <h2 className={`font-display text-sm md:text-xl md:text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
                             Recent Works
                         </h2>
                         <button

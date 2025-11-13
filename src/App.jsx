@@ -10,7 +10,7 @@ function App() {
     useEffect(() => {
         setTimeout(() => {
             setIsLoaded(true);
-        }, 500);
+        }, 300);
     }, []);
 
     const toggleDarkMode = () => {
@@ -26,8 +26,8 @@ function App() {
             </div>
 
             {/* CARD CONTAINER */}
-            <div className="max-w-7xl mx-auto px-4 md:px-6 py-3">
-                <div className={`rounded-2xl p-8 md:p-12 shadow-lg transition-all duration-2000 ease-out ${isDarkMode ? 'bg-gray-800' : 'bg-gray-100'
+            <div className="max-w-7xl mx-auto px-4 md:px-6 py-8">
+                <div className={`rounded-2xl p-8 md:p-12 shadow-lg transition-all duration-1000 ease-out ${isDarkMode ? 'bg-gray-800' : 'bg-gray-100'
                     } ${isLoaded
                         ? 'opacity-100 scale-100'
                         : 'opacity-0 scale-95'

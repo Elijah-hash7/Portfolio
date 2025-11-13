@@ -5,13 +5,13 @@ const Navbar = ({ isDarkMode, toggleDarkMode }) => {
     return (
         <div className='pt-4 '>
             <nav className={isDarkMode ? 'bg-gray-900' : 'bg-white'}>
-                <div className="max-w-6xl mx-auto px-4 md:px-6 py-4">
+                <div className="max-w-7xl mx-auto px-4 md:px-6 py-4">
                     <div className="flex justify-between items-center">
                         <div className="flex items-center gap-4 md:gap-8">
-                            <h1 className={`${isDarkMode ? 'text-white  text-2xl font-Bold' : 'text-gray-900 text-2xl font-semibold'} text-lg md:text-2xl font-bold`}>
+                            <h1 className={`font-display ${isDarkMode ? 'text-white  text-2xl font-Bold' : 'text-gray-900 text-2xl font-semibold'} text-lg md:text-2xl font-bold`}>
                                 Elijah.hash
                             </h1>
-                            <span className={`text-sm md:text-lg mx-4 md:mx-20 mx-32 font-semibold ${isDarkMode ? 'text-gray-400' : 'text-gray-600'} hidden sm:block`}>
+                            <span className={`font-sans text-sm md:text-lg mx-4 md:mx-20 mx-32 font-semibold ${isDarkMode ? 'text-gray-400' : 'text-gray-600'} hidden sm:block`}>
                                 Emmanuel Elijah
                             </span>
                         </div>

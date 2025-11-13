@@ -46,12 +46,12 @@ const Hero = ({ isDarkMode }) => {
         <div className="flex flex-col lg:flex-row items-center lg:items-center gap-3 mb-15 md:mb-3">
             <div className="flex-1 max-w-4xl">
                 <div className="h-10 md:h-12 mb-2">
-                    <p className={`text-2xl ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                    <p className={`font-display text-2xl ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
                         {displayText}
                         <span className="animate-pulse">|</span>
                     </p>
                 </div>
-                <h1 className={`text-3xl md:text-4xl lg:text-5xl mt-10 md:mt-2  font-bold leading-tight mb-12 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                <h1 className={`font-display text-3xl md:text-4xl lg:text-5xl mt-10 md:mt-2  font-bold leading-tight mb-12 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
                     Crafting seamless digital experiences through innovative web solutions and blockchain technology.
                 </h1>
             </div>
