@@ -1,0 +1,76 @@
+---
+import '@/styles/global.css'
+import TileSurface from '@/components/TileSurface';
+const { title = "Emmanuel Elijah" } = Astro.props;
+
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="theme-color" content="#05070c" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Cormorant+Garamond:wght@600;700&family=Geist+Mono:wght@400;500&family=JetBrains+Mono:wght@400;500&family=Space+Mono:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <style is:inline>
+      html {
+        background: #05070c;
+        color: #f8fafc;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background:
+          radial-gradient(circle at top, rgba(163, 230, 53, 0.06), transparent 38%),
+          #05070c;
+        color: #f8fafc;
+      }
+    </style>
+  </head>
+
+  <body class="relative bg-[#05070c] text-white antialiased">
+    <div
+      style="position: fixed; inset: 0; width: 100%; height: 100%; z-index: 0;"
+    >
+      <TileSurface client:only="react" />
+    </div>
+
+    <div class="relative" style="z-index: 1;">
+      <slot />
+    </div>
+
+    <!-- Loading overlay for /projects and /articles navigation -->
+    <div id="nav-loading" class="nav-loading" aria-hidden="true">
+      <div class="nav-loading__bar"></div>
+    </div>
+    <script is:inline>
+      document.addEventListener('DOMContentLoaded', function() {
+        var overlay = document.getElementById('nav-loading');
+        var DURATION = 2200;
+        document.addEventListener('click', function(e) {
+          var a = e.target.closest('a[href="/projects"], a[href="/articles"]');
+          if (!a || a.target === '_blank') return;
+          e.preventDefault();
+          if (overlay) {
+            overlay.classList.add('nav-loading--active');
+            overlay.setAttribute('aria-hidden', 'false');
+          }
+          setTimeout(function() { window.location.href = a.getAttribute('href'); }, DURATION);
+        }, true);
+      });
+    </script>
+    <style is:inline>
+      .nav-loading{position:fixed;inset:0;z-index:9999;background:rgba(5,7,12,0.85);opacity:0;visibility:hidden;pointer-events:none;transition:opacity .25s,visibility .25s}
+      .nav-loading--active{opacity:1;visibility:visible;pointer-events:auto}
+      .nav-loading__bar{position:absolute;top:0;left:0;height:3px;background:#c8f55a;width:0;animation:nav-load-fill 2.2s ease-out forwards}
+      @keyframes nav-load-fill{to{width:100%}}
+    </style>
+  </body>
+</html>
