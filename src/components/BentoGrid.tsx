@@ -389,11 +389,11 @@ function BentoItemGithubActivity() {
         </span>
       </div>
 
-      <div className="flex-1 flex items-stretch overflow-x-auto overflow-y-hidden min-h-0">
-        <div className="flex-shrink-0 h-full" style={{
+      <div className="flex-1 flex items-center overflow-x-auto overflow-y-hidden min-h-0 gh-grid-scroll">
+        <div className="flex-shrink-0" style={{
           display: "grid",
-          gridTemplateColumns: `repeat(${Math.ceil(cells.length / 7)}, 18px)`,
-          gridTemplateRows: "repeat(7, 18px)",
+          gridTemplateColumns: `repeat(${Math.ceil(cells.length / 7)}, 24px)`,
+          gridTemplateRows: "repeat(7, 24px)",
           gap: 5,
         }}>
           {cells.map((cell, i) => (
@@ -677,6 +677,15 @@ export default function BentoGrid() {
   width: max-content;
 }
 .tech-marquee:hover { animation-play-state: paused; }
+
+.gh-grid-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(190,242,100,0.3) rgba(255,255,255,0.04);
+}
+.gh-grid-scroll::-webkit-scrollbar { height: 6px; }
+.gh-grid-scroll::-webkit-scrollbar-track { background: rgba(255,255,255,0.04); border-radius: 3px; }
+.gh-grid-scroll::-webkit-scrollbar-thumb { background: rgba(190,242,100,0.3); border-radius: 3px; }
+.gh-grid-scroll::-webkit-scrollbar-thumb:hover { background: rgba(190,242,100,0.5); }
 
 * { box-sizing: border-box; }
       `}</style>
