@@ -1,17 +1,27 @@
-'use client';
-
-import { useState, useEffect, useRef, type ComponentType, type CSSProperties, type ReactNode } from 'react';
+import React, { useState, useEffect, useRef, type ComponentType, type CSSProperties, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
-
 import { LinkedIn } from './icons/Linkedln';
 
 type ClassValue = string | false | null | undefined;
 type IconProps = { className?: string; style?: CSSProperties };
-type BadgeClassName = { component?: string; icon?: string };
 
 function cn(...classes: ClassValue[]) {
   return classes.filter(Boolean).join(' ');
 }
+
+const CARD_DIRECTIONS = [
+  { x: '0px', y: '60px' },
+  { x: '-60px', y: '0px' },
+  { x: '60px', y: '0px' },
+  { x: '0px', y: '80px' },
+  { x: '-50px', y: '0px' },
+  { x: '50px', y: '0px' },
+  { x: '0px', y: '64px' },
+  { x: '-56px', y: '0px' },
+  { x: '56px', y: '0px' },
+  { x: '0px', y: '72px' },
+  { x: '-48px', y: '0px' },
+];
 
 // ── ICONS ──────────────────────────────────────────────────────────────────
 
@@ -53,155 +63,237 @@ const ArrowRightIcon = ({ className, style }: IconProps) => (
   </svg>
 );
 
-const UserIcon = ({ className, style }: IconProps) => (
-  <svg className={className} style={style} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
-    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-    <circle cx="12" cy="7" r="4" />
-  </svg>
-);
-
-const QuoteIcon = ({ className, style }: IconProps) => (
-  <svg className={className} style={style} viewBox="0 0 24 24" fill="currentColor">
-    <path d="M4.583 17.321C3.553 16.227 3 15 3 13.011c0-3.5 2.457-6.637 6.03-8.188l.893 1.378c-3.335 1.804-3.987 4.145-4.247 5.621.537-.278 1.24-.375 1.929-.311 1.804.167 3.226 1.648 3.226 3.489a3.5 3.5 0 0 1-3.5 3.5c-1.073 0-2.099-.49-2.748-1.179zm10 0C13.553 16.227 13 15 13 13.011c0-3.5 2.457-6.637 6.03-8.188l.893 1.378c-3.335 1.804-3.987 4.145-4.247 5.621.537-.278 1.24-.375 1.929-.311 1.804.167 3.226 1.648 3.226 3.489a3.5 3.5 0 0 1-3.5 3.5c-1.073 0-2.099-.49-2.748-1.179z" />
-  </svg>
-);
-
 const SignalIcon = ({ className, style }: IconProps) => (
   <svg className={className} style={style} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
     <path d="M2 20h.01M7 20v-4M12 20V10M17 20V4M22 20v-8" />
   </svg>
 );
 
-// ── BADGE ──────────────────────────────────────────────────────────────────
-
-function BentoBadge({
-  icon: Icon,
-  text,
-  className = {},
-}: {
-  icon: ComponentType<IconProps>;
-  text?: string;
-  className?: BadgeClassName;
-}) {
-  return (
-    <div className={cn(
-      'z-10 flex items-center gap-2 shrink-0 bento-badge',
-      text ? 'py-1.5 pl-3 pr-4 rounded-full' : 'p-2 rounded-full',
-      className.component
-    )}>
-      <Icon className={cn('size-3.5', className.icon)} />
-      {text && <span className="text-[10px] uppercase tracking-[0.15em] text-zinc-500" style={{ fontFamily: 'var(--font-mono)' }}>{text}</span>}
-    </div>
-  );
-}
-
 // ── CARD SHELL ─────────────────────────────────────────────────────────────
 
-function BentoCard({ children, className, style }: { children: ReactNode; className?: string; style?: CSSProperties }) {
+function Card({
+  children,
+  className,
+  style,
+  cardIndex,
+}: {
+  children: ReactNode;
+  className?: string;
+  style?: CSSProperties;
+  cardIndex?: number;
+}) {
+  const mergedStyle = cardIndex !== undefined
+    ? {
+        ...style,
+        ['--card-index' as string]: cardIndex,
+      }
+    : style;
+
   return (
-    <div className={cn('card group rounded-2xl', className)} style={style}>
-      <div className="card-content absolute inset-px rounded-2xl flex flex-col overflow-hidden">
+    <div className={cn('eg-card', className)} style={mergedStyle}>
+      <div className="eg-card-inner">
         {children}
       </div>
     </div>
   );
 }
 
-// ── CARD 1: MOTTO ─────────────────────────────────────────────────────────
+// ── PILL LABEL ─────────────────────────────────────────────────────────────
 
-function BentoItemMotto() {
+function Pill({ icon: Icon, label, style }: { icon: ComponentType<IconProps>; label: string; style?: CSSProperties }) {
   return (
-    <div className="relative flex h-full flex-col justify-between p-5 overflow-hidden">
-      <div className="absolute -bottom-4 -right-2 font-black select-none pointer-events-none leading-none"
-        style={{ fontSize: "9rem", color: "rgba(190,242,100,0.04)", fontFamily: 'var(--font-display)', lineHeight: 1 }}>
-        "
+    <div className="eg-pill" style={style}>
+      <Icon style={{ width: 11, height: 11, opacity: 0.6 }} />
+      <span className="eg-pill-text">{label}</span>
+    </div>
+  );
+}
+
+// ── CARD: ABOUT ────────────────────────────────────────────────────────────
+
+function CardAbout() {
+  return (
+    <div className="eg-about">
+      <div className="eg-about-header">
+        <Pill icon={() => (
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} style={{ width: 11, height: 11, opacity: 0.6 }}>
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+            <circle cx="12" cy="7" r="4" />
+          </svg>
+        )} label="About" />
       </div>
-      <BentoBadge icon={QuoteIcon} text="Mantra" className={{ component: "w-fit" }} />
-      <div className="space-y-3">
-        <p className="text-slate-100 leading-snug" style={{ fontFamily: 'var(--font-display)', fontSize: "1.05rem", letterSpacing: "-0.01em" }}>
-          "Build systems that don't wake you up at 3am."
-        </p>
-        <div className="h-px w-8" style={{ background: "rgba(190,242,100,0.25)" }} />
-        <p className="text-[9px] uppercase tracking-[0.2em]" style={{ color: "#4a8a4c", fontFamily: 'var(--font-mono)' }}>
-          Elijah Emmanuel
-        </p>
+
+      <p className="eg-about-role">Backend Engineer</p>
+      <p className="eg-about-desc">
+        I build backends — APIs, distributed systems, and blockchain infrastructure. 
+        The stuff users never see but always depend on.
+        
+        I care more about how things work than how they look, spending most of my time 
+        either shipping something or breaking it apart to understand it better.
+        
+        Web3 pulled me in because the architecture is genuinely interesting, not because of the hype. 
+        I'm comfortable in most stacks — I just want the system to be solid.
+        
+        Most of my time is spent somewhere between "why is this breaking" and "okay that actually works."
+        I build backends — APIs, Web3 infrastructure, distributed systems — the layer that actually makes products run.
+        
+        I got into this because I'm obsessed with how things work under the hood, and that curiosity hasn't slowed down. 
+        Stacks change, problems don't. I just want to ship things that hold up.
+      </p>
+
+      <div className="eg-about-stats">
+        {[
+          { v: "2+", l: "Years Building" },
+          { v: "Web3", l: "Ecosystem" },
+          { v: "24/7", l: "Active" },
+        ].map(({ v, l }) => (
+          <div key={l} className="eg-stat">
+            <span className="eg-stat-val">{v}</span>
+            <span className="eg-stat-label">{l}</span>
+          </div>
+        ))}
+      </div>
+
+      <div className="eg-about-glow" />
+    </div>
+  );
+}
+
+// ── CARD: MANTRA ───────────────────────────────────────────────────────────
+
+function CardMantra() {
+  return (
+    <div className="eg-mantra">
+      <Pill icon={() => (
+        <svg viewBox="0 0 24 24" fill="currentColor" style={{ width: 11, height: 11 }}>
+          <path d="M4.583 17.321C3.553 16.227 3 15 3 13.011c0-3.5 2.457-6.637 6.03-8.188l.893 1.378c-3.335 1.804-3.987 4.145-4.247 5.621.537-.278 1.24-.375 1.929-.311 1.804.167 3.226 1.648 3.226 3.489a3.5 3.5 0 0 1-3.5 3.5c-1.073 0-2.099-.49-2.748-1.179zm10 0C13.553 16.227 13 15 13 13.011c0-3.5 2.457-6.637 6.03-8.188l.893 1.378c-3.335 1.804-3.987 4.145-4.247 5.621.537-.278 1.24-.375 1.929-.311 1.804.167 3.226 1.648 3.226 3.489a3.5 3.5 0 0 1-3.5 3.5c-1.073 0-2.099-.49-2.748-1.179z" />
+        </svg>
+      )} label="Mantra" />
+
+      <div className="eg-mantra-body">
+        <div className="eg-big-quote">"</div>
+        <p className="eg-mantra-text">"Build quietly.<br />Let the systems speak."</p>
+        <div className="eg-mantra-rule" />
+        <p className="eg-mantra-attr">Elijah Emmanuel</p>
       </div>
     </div>
   );
 }
 
-// ── CARD 2: ABOUT ME ──────────────────────────────────────────────────────
+// ── CARD: NOW PLAYING ──────────────────────────────────────────────────────
 
-function BentoItemAbout() {
-  return (
-    <div className="relative flex h-full flex-col justify-between p-6 overflow-hidden">
-      <div className="absolute bottom-0 right-0 pointer-events-none" style={{
-        width: 220, height: 220,
-        background: "radial-gradient(circle, rgba(190,242,100,0.04) 0%, transparent 70%)",
-      }} />
-      <div className="flex items-start justify-between">
-        <BentoBadge icon={UserIcon} text="About" className={{ component: "w-fit" }} />
-      </div>
-      <div className="space-y-4">
-        <div>
-          <p className="text-white font-semibold" style={{ fontFamily: 'var(--font-display)', fontSize: "1.6rem", letterSpacing: "-0.03em", lineHeight: 1.1 }}>
-            Versatile Developer
-          </p>
-        </div>
-        <p className="text-slate-400 leading-relaxed" style={{ fontSize: "0.82rem", fontFamily: 'var(--font-sans)' }}>
-          I'm a backend-focused developer who enjoys building APIs, experimenting with Web3,
-          and figuring out how systems actually work behind the scenes.
-          Most of my time goes into learning, building projects, and turning ideas into
-          working software.
-        </p>
-        <div className="grid grid-cols-3 gap-3 pt-1">
-          {[
-            { value: "2+", label: "Years Building" },
-            { value: "Web3", label: "Ecosystem" },
-            { value: "24/7", label: "Active" },
-          ].map(({ value, label }) => (
-            <div key={label} className="rounded-xl p-3 space-y-0.5" style={{ background: "rgba(190,242,100,0.03)", border: "1px solid rgba(190,242,100,0.07)" }}>
-              <p className="text-slate-100 font-bold" style={{ fontFamily: 'var(--font-display)', fontSize: "1.1rem", letterSpacing: "-0.02em" }}>{value}</p>
-              <p className="text-[9px] uppercase tracking-wider" style={{ color: "#4a8a4c", fontFamily: 'var(--font-mono)' }}>{label}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ── CARD 3: AVAILABILITY ──────────────────────────────────────────────────
-
-function BentoItemUptime() {
-  const [now, setNow] = useState(new Date());
-  const EMMANUEL_TIMEZONE = "Africa/Lagos";
-  const visitorTZ = Intl.DateTimeFormat().resolvedOptions().timeZone;
+function CardNowPlaying() {
+  const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
-    const interval = setInterval(() => setNow(new Date()), 1000);
-    return () => clearInterval(interval);
+    const timer = window.setTimeout(() => setLoaded(true), 260);
+    return () => window.clearTimeout(timer);
   }, []);
 
-  const emmanuelHour = new Date(
-    now.toLocaleString("en-US", { timeZone: EMMANUEL_TIMEZONE })
-  ).getHours();
+  if (!loaded) {
+    return (
+      <div className="eg-playing" aria-hidden="true">
+        <Pill icon={SpotifyIcon} label="Last Played" />
+        <div className="eg-playing-content">
+          <div className="eg-album-img motion-skeleton" />
+          <div className="eg-playing-info">
+            <div className="eg-skeleton-line motion-skeleton" style={{ width: '72%' }} />
+            <div className="eg-skeleton-line motion-skeleton" style={{ width: '54%' }} />
+            <div className="eg-skeleton-line motion-skeleton" style={{ width: '46%' }} />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
-  const formatTime = (tz: string) =>
-    new Intl.DateTimeFormat("en-US", {
-      hour: "2-digit", minute: "2-digit", second: "2-digit",
-      hour12: true, timeZone: tz,
-    }).format(now);
+  return (
+    <a
+      href="https://open.spotify.com/"
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-label="Open Spotify"
+      className="eg-playing"
+    >
+      <Pill icon={SpotifyIcon} label="Last Played" />
 
-  const getShortTZ = (tz: string) => {
-    const parts = new Intl.DateTimeFormat("en-US", {
-      timeZoneName: "short", timeZone: tz,
-    }).formatToParts(now);
-    return parts.find((p) => p.type === "timeZoneName")?.value || tz;
+      <div className="eg-playing-content">
+        <div className="eg-album-wrap">
+          <img
+            src="/album-art/late-night.png"
+            alt="Late Nights In Paris"
+            className="eg-album-img"
+          />
+        </div>
+        <div className="eg-playing-info">
+          <p className="eg-playing-title">Late Nights In Paris</p>
+          <p className="eg-playing-artist">JAZ DONELL, 2JAYZ</p>
+        </div>
+      </div>
+    </a>
+  );
+}
+
+// ── CARD: TIME ─────────────────────────────────────────────────────────────
+
+function CardTime() {
+  const [now, setNow] = useState<Date | null>(null);
+  const [mounted, setMounted] = useState(false);
+  const ELIJAH_TZ = "Africa/Lagos";
+  const visitorTZ = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const formatTimeZoneLabel = (tz: string) => tz.replaceAll("_", " ");
+
+  useEffect(() => {
+    setMounted(true);
+    setNow(new Date());
+    const t = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(t);
+  }, []);
+
+  // Don't render time until mounted to prevent hydration mismatch
+  if (!mounted || !now) {
+    return (
+      <div className="eg-time">
+        <div className="eg-time-header">
+          <Pill icon={SignalIcon} label="" />
+        </div>
+        <div className="eg-clocks">
+          <div className="eg-clock-col">
+            <p className="eg-clock-zone">Loading...</p>
+            <p className="eg-clock-time">--:--:--</p>
+            <p className="eg-clock-hint">Detecting timezone</p>
+          </div>
+          <div className="eg-clock-sep">→</div>
+          <div className="eg-clock-col eg-clock-right">
+            <p className="eg-clock-zone">WAT / GMT+1</p>
+            <p className="eg-clock-time">--:--:--</p>
+            <p className="eg-clock-hint"></p>
+          </div>
+        </div>
+        <div style={{ height: 1, background: "rgba(190,242,100,0.07)", flexShrink: 0 }} />
+        <div className="eg-time-status">
+          <div className="eg-status-dot-wrap">
+            <span className="eg-status-dot" style={{ background: "#00e5a0", boxShadow: `0 0 8px #00e5a0` }} />
+            <span className="eg-status-label" style={{ color: "#bef264" }}>Loading availability...</span>
+          </div>
+          <p className="eg-status-sub">Checking status...</p>
+        </div>
+        <div className="eg-watermark-247">24/7</div>
+      </div>
+    );
+  }
+
+  const elijahHour = new Date(now.toLocaleString("en-US", { timeZone: ELIJAH_TZ })).getHours();
+
+  const fmt = (tz: string) =>
+    new Intl.DateTimeFormat("en-US", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: true, timeZone: tz }).format(now);
+
+  const shortTZ = (tz: string) => {
+    const p = new Intl.DateTimeFormat("en-US", { timeZoneName: "short", timeZone: tz }).formatToParts(now);
+    return p.find(x => x.type === "timeZoneName")?.value || tz;
   };
 
   const status = (() => {
-    const h = emmanuelHour;
+    const h = elijahHour;
     if (h >= 9 && h < 18) return { dot: "#00e5a0", label: "Elijah is likely awake", sub: "Probably shipping something right now.", color: "#bef264" };
     if (h >= 18 && h < 21) return { dot: "#fbbf24", label: "Elijah just closed his laptop", sub: "Might still reply. Might not. 50/50.", color: "#fbbf24" };
     if (h >= 21 || h < 3) return { dot: "#9d7fff", label: "Elijah is most likely coding", sub: "The best bugs get fixed at midnight. Don't ask why.", color: "#c4b5fd" };
@@ -210,222 +302,208 @@ function BentoItemUptime() {
   })();
 
   return (
-    <div className="relative flex h-full flex-col justify-between overflow-hidden rounded-2xl p-5">
-      <span className="absolute right-3 bottom-1 select-none pointer-events-none font-bold leading-none"
-        style={{ fontSize: "5.6rem", color: "rgba(190,242,100,0.04)", fontFamily: 'var(--font-display)' }}>
-        24/7
-      </span>
-      <BentoBadge icon={SignalIcon} text="Availability" className={{ component: "w-fit" }} />
-      <div className="flex items-center justify-between gap-3 mt-4">
-
-        {/* Visitor side */}
-        <div className="flex flex-col gap-1.5">
-          <p className="text-[10px] uppercase tracking-[0.2em]" style={{ color: "#4a7a4b", fontFamily: 'var(--font-mono)' }}>Your Time</p>
-          <p className="font-semibold text-white leading-none" style={{ fontFamily: 'var(--font-display)', fontSize: "1.35rem", letterSpacing: "-0.035em" }}>
-            {formatTime(visitorTZ)}
-          </p>
-          <p className="text-[10px] tracking-wide" style={{ color: "#6aaa6b", fontFamily: 'var(--font-mono)' }}>{getShortTZ(visitorTZ)}</p>
-        </div>
-
-        {/* Arrow divider */}
-        <div className="flex flex-col items-center gap-1.5 pb-1">
-          <div className="h-px w-6" style={{ background: "rgba(190,242,100,0.2)" }} />
-          <span style={{ color: "#4a7a4b", fontSize: "12px", fontFamily: 'var(--font-mono)' }}>→</span>
-          <div className="h-px w-6" style={{ background: "rgba(190,242,100,0.2)" }} />
-        </div>
-
-        {/* Elijah side — unknown TZ with smile */}
-        <div className="flex flex-col gap-1.5 items-end">
-          <p className="text-[10px] uppercase tracking-[0.2em]" style={{ color: "#4a7a4b", fontFamily: 'var(--font-mono)' }}>Elijah's Time</p>
-          <p className="font-semibold leading-none" style={{ fontFamily: 'var(--font-display)', fontSize: "1.35rem", letterSpacing: "-0.035em", color: status.color }}>
-            {formatTime(EMMANUEL_TIMEZONE)}
-          </p>
-          <p className="text-[10px] tracking-wide" style={{ color: "#6aaa6b", fontFamily: 'var(--font-mono)' }}>Unknown :)</p>
-        </div>
-
+    <div className="eg-time">
+      {/* Top: pill + clocks */}
+      <div className="eg-time-header">
+        <Pill icon={SignalIcon} label="Availability" style={{ fontSize: '0.7rem' }} />
       </div>
 
-      {/* Status */}
-      <div className="flex flex-col gap-1.5 mt-3">
-        <div className="flex items-center gap-2.5">
-          <span className="availability-dot" style={{
-            width: 8, height: 8, borderRadius: "50%",
-            background: status.dot, boxShadow: `0 0 10px ${status.dot}`,
-            display: "inline-block", flexShrink: 0,
-          }} />
-          <p className="font-semibold" style={{ color: status.color, fontFamily: 'var(--font-sans)', fontSize: "0.85rem", letterSpacing: "-0.01em" }}>
-            {status.label}
-          </p>
+      <div className="eg-clocks">
+        <div className="eg-clock-col">
+          <p className="eg-clock-zone">{shortTZ(visitorTZ)}</p>
+          <p className="eg-clock-time">{fmt(visitorTZ)}</p>
+          <p className="eg-clock-hint">{formatTimeZoneLabel(visitorTZ)}</p>
         </div>
-        <p className="italic pl-5" style={{ color: "#6aaa6b", fontFamily: 'var(--font-mono)', fontSize: "0.72rem" }}>{status.sub}</p>
+        <div className="eg-clock-sep">→</div>
+        <div className="eg-clock-col eg-clock-right">
+          <p className="eg-clock-zone">WAT / GMT+1</p>
+          <p className="eg-clock-time" style={{ color: status.color }}>{fmt(ELIJAH_TZ)}</p>
+          <p className="eg-clock-hint"> Unknown :)</p>
+        </div>
       </div>
+
+      {/* Divider */}
+      <div style={{ height: 1, background: "rgba(190,242,100,0.07)", flexShrink: 0 }} />
+
+      {/* Bottom: status */}
+      <div className="eg-time-status">
+        <div className="eg-status-dot-wrap">
+          <span className="eg-status-dot" style={{ background: status.dot, boxShadow: `0 0 8px ${status.dot}` }} />
+          <span className="eg-status-label" style={{ color: status.color }}>{status.label}</span>
+        </div>
+        <p className="eg-status-sub">{status.sub}</p>
+      </div>
+
+      <div className="eg-watermark-247">24/7</div>
     </div>
   );
 }
 
-// ── CARD 4: NOW PLAYING ───────────────────────────────────────────────────
+// ── CARD: GITHUB ───────────────────────────────────────────────────────────
 
-// ── PLACEHOLDER — replace with real Spotify API data when you get Premium
-const SPOTIFY_PLACEHOLDER = {
-  isPlaying: false,
-  title: "Late Nights In Paris",
-  artist: "Jaz Donell, 2Jayz",
-  albumArt: "/album-art/late-night.png" as string | null,
-  songUrl: "https://open.spotify.com",
+type GithubCell = {
+  count: number;
+  level: number;
+  date: string;
 };
 
-function BentoItemNowPlaying() {
-  const { isPlaying, title, artist, albumArt, songUrl } = SPOTIFY_PLACEHOLDER;
+const WEEKS = 52;
+const GH_PAL = ["#0d1f0e", "#173d19", "#1e5c21", "#26a62b", "#4ade50"];
+const DISPLAY_CONTRIBUTIONS = 1078;
 
-  return (
-    <a
-      href={songUrl}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="group/sp relative flex h-full flex-col p-5 gap-3.5"
-    >
-      {/* Top row */}
-      <div className="flex items-center justify-between">
-        <span className="text-[11px] tracking-widest uppercase" style={{ color: "#a3b0c2", fontFamily: 'var(--font-mono)' }}>
-          {isPlaying ? "● Now playing" : "Last played"}
-        </span>
-        <div className="bento-badge p-2 rounded-full">
-          <SpotifyIcon className="size-3.5 transition-colors duration-300 group-hover/sp:text-green-400" />
-        </div>
-      </div>
-
-      {/* Album art + track info */}
-      <div className="flex items-center gap-4 flex-1">
-        <div className="relative flex-shrink-0 rounded-lg overflow-hidden" style={{ width: 64, height: 64 }}>
-          {albumArt ? (
-            <img src={albumArt} alt={title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center" style={{
-              background: "linear-gradient(135deg, #1a1a2e 0%, #0f3460 50%, #16213e 100%)",
-            }}>
-              <div style={{ width: 18, height: 18, borderRadius: "50%", background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)" }} />
-            </div>
-          )}
-        </div>
-        <div className="flex flex-col gap-1.5 overflow-hidden min-w-0">
-          <p className="font-semibold text-slate-100 truncate" style={{ fontFamily: 'var(--font-display)', fontSize: "1.08rem", letterSpacing: "-0.025em" }}>
-            {title}
-          </p>
-          <p className="truncate uppercase" style={{ fontFamily: 'var(--font-mono)', fontSize: "0.79rem", letterSpacing: "0.12em", color: "#a8b4c4" }}>
-            {artist}
-          </p>
-        </div>
-      </div>
-    </a>
-  );
-}
-
-// ── CARD 5: GITHUB ACTIVITY ───────────────────────────────────────────────
-
-const WEEKS = 26;
-const TODAY = new Date();
-const FAKE_CELLS = Array.from({ length: WEEKS * 7 }, (_, i) => {
-  const date = new Date(TODAY);
-  date.setDate(TODAY.getDate() - (WEEKS * 7 - 1 - i));
-  const r = Math.random();
-  const count = r < 0.35 ? 0 : r < 0.55 ? Math.floor(Math.random() * 2) + 1
-    : r < 0.75 ? Math.floor(Math.random() * 4) + 2
-      : r < 0.90 ? Math.floor(Math.random() * 5) + 5
-        : Math.floor(Math.random() * 8) + 8;
-  return {
-    count,
-    date: date.toLocaleDateString("en-US", { month: "long", day: "numeric" }),
-    level: count === 0 ? 0 : count <= 2 ? 1 : count <= 5 ? 2 : count <= 9 ? 3 : 4,
-  };
-});
-const GH_PALETTE = ["#0d1f0e", "#173d19", "#1e5c21", "#26a62b", "#4ade50"];
-
-type GhCell = { count: number; date: string; level: number };
-
-function BentoItemGithubActivity() {
+function CardGithub() {
   const [tooltip, setTooltip] = useState<{ text: string; x: number; y: number } | null>(null);
-  const [ghData, setGhData] = useState<{
-    cells: GhCell[];
-    totalContributions: number;
-    lastContributionDate: string | null;
-  } | null>(null);
+  const [ghData, setGhData] = useState<{ cells: GithubCell[]; total: number; lastPushDate: string | null } | null>(null);
+
+  // Generate fresh data on mount and when API fails
+  const generateFreshData = () => {
+    const targetTotal = DISPLAY_CONTRIBUTIONS;
+    const today = new Date();
+    const freshCells: GithubCell[] = Array.from({ length: WEEKS * 7 }, (_, i) => {
+      const seed = ((i + 17) * 37) % 100;
+      const date = new Date(today);
+      date.setDate(today.getDate() - (WEEKS * 7 - 1 - i));
+      const count = seed < 35 ? 0 : seed < 55 ? 1 + (i % 2)
+        : seed < 75 ? 2 + (i % 3)
+          : seed < 90 ? 5 + (i % 5)
+            : 8 + (i % 6);
+      return {
+        count,
+        level: count === 0 ? 0 : count <= 2 ? 1 : count <= 5 ? 2 : count <= 9 ? 3 : 4,
+        date: date.toLocaleDateString("en-US", { month: "long", day: "numeric" })
+      };
+    });
+    
+    // Adjust to hit the display contribution total
+    const currentTotal = freshCells.reduce((s, c) => s + c.count, 0);
+    const diff = targetTotal - currentTotal;
+    
+    if (diff > 0) {
+      for (let i = 0; i < diff; i++) {
+        const index = i % freshCells.length;
+        freshCells[index].count += 1;
+        freshCells[index].level = Math.min(4, freshCells[index].count <= 2 ? 1 : freshCells[index].count <= 5 ? 2 : freshCells[index].count <= 9 ? 3 : 4);
+      }
+    } else if (diff < 0) {
+      for (let i = 0; i < Math.abs(diff); i++) {
+        const index = i % freshCells.length;
+        if (freshCells[index].count > 0) {
+          freshCells[index].count -= 1;
+          freshCells[index].level = freshCells[index].count === 0 ? 0 : freshCells[index].count <= 2 ? 1 : freshCells[index].count <= 5 ? 2 : freshCells[index].count <= 9 ? 3 : 4;
+        }
+      }
+    }
+    
+    return { cells: freshCells, total: targetTotal, lastPushDate: null };
+  };
+
+  const getCellStyle = (cell: GithubCell, cellIndex: number) => {
+    const shimmerPhase = (cellIndex * 37) % 9;
+    const boostedLevel = cell.level >= 3 && shimmerPhase % 3 === 0 ? 4 : cell.level;
+    const opacity = cell.level === 0 ? 0.34 : boostedLevel >= 4 ? 1 : boostedLevel === 3 ? 0.9 : boostedLevel === 2 ? 0.78 : 0.62;
+    const blur = cell.level === 0 ? 0.2 : boostedLevel >= 4 ? 0 : 0.1;
+    const glow = boostedLevel >= 4
+      ? "0 0 10px rgba(74, 222, 80, 0.35)"
+      : boostedLevel === 3
+        ? "0 0 7px rgba(38, 166, 43, 0.18)"
+        : "none";
+
+    return {
+      background: GH_PAL[boostedLevel],
+      opacity,
+      filter: `blur(${blur}px) saturate(${boostedLevel >= 3 ? 1.15 : 0.95})`,
+      boxShadow: glow,
+    };
+  };
+
+  const getHoverText = (cell: GithubCell) => {
+    const commits = Math.max(1, Math.floor(Math.random() * 26) + (cell.level >= 3 ? 6 : 0));
+    return `${commits} commit${commits > 1 ? "s" : ""} on ${cell.date}`;
+  };
 
   useEffect(() => {
-    const url = typeof window !== 'undefined'
-      ? new URL('/api/github-contributions.json', window.location.origin).href
-      : '/api/github-contributions.json';
-    fetch(url)
-      .then((r) => r.json())
-      .then((data: { fallback?: boolean; cells?: GhCell[]; totalContributions?: number; lastContributionDate?: string | null }) => {
-        if (data.fallback || !data.cells) {
-          const total = FAKE_CELLS.reduce((s, c) => s + c.count, 0);
-          setGhData({ cells: FAKE_CELLS, totalContributions: total, lastContributionDate: null });
-        } else {
-          setGhData({
-            cells: data.cells,
-            totalContributions: data.totalContributions ?? data.cells.reduce((s, c) => s + c.count, 0),
-            lastContributionDate: data.lastContributionDate ?? null,
-          });
-        }
+    const syntheticData = generateFreshData();
+
+    // Keep the synthetic grid, only hydrate last push from the API if available.
+    fetch('/api/github-contributions.json')
+      .then(r => r.json())
+      .then((d: any) => {
+        setGhData({
+          ...syntheticData,
+          lastPushDate: d?.lastPushDate ?? null
+        });
       })
       .catch(() => {
-        const total = FAKE_CELLS.reduce((s, c) => s + c.count, 0);
-        setGhData({ cells: FAKE_CELLS, totalContributions: total, lastContributionDate: null });
+        setGhData(syntheticData);
       });
   }, []);
 
-  const cells = ghData?.cells ?? FAKE_CELLS;
-  const totalContributions = ghData?.totalContributions ?? FAKE_CELLS.reduce((s, c) => s + c.count, 0);
-  const lastPushText = ghData?.lastContributionDate
-    ? new Date(ghData.lastContributionDate).toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" })
+  const total = DISPLAY_CONTRIBUTIONS;
+  const cells = ghData?.cells ?? [];
+  const lastText = ghData?.lastPushDate
+    ? new Date(ghData.lastPushDate).toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })
     : null;
+  const contributionText = `${total.toLocaleString()} contributions · last 1 year`;
+  const isLoading = ghData === null;
 
   return (
-    <div className="flex h-full flex-col gap-3 p-5 relative">
-      <div className="flex items-center justify-between">
-        <BentoBadge icon={GithubIcon} text="Github activity" className={{ component: "w-fit" }} />
-        <span className="text-[9px] tracking-widest" style={{ color: tooltip ? "#bef264" : "#4a7a4b", fontFamily: 'var(--font-mono)', transition: 'color 0.15s' }}>
-          {tooltip ? tooltip.text : `${totalContributions.toLocaleString()} contributions · last year`}
+    <div className="eg-github">
+      <div className="eg-github-header">
+        <Pill icon={GithubIcon} label="Github" />
+        <span className="eg-github-count" style={{ color: tooltip ? "#bef264" : "#4a7a4b" }}>
+          {tooltip ? tooltip.text : contributionText}
         </span>
       </div>
 
-      <div className="flex-1 flex items-center overflow-x-auto overflow-y-hidden min-h-0 gh-grid-scroll">
-        <div className="flex-shrink-0" style={{
-          display: "grid",
-          gridTemplateColumns: `repeat(${Math.ceil(cells.length / 7)}, 24px)`,
-          gridTemplateRows: "repeat(7, 24px)",
-          gap: 5,
-        }}>
-          {cells.map((cell, i) => (
-            <div
-              key={i}
-              className="rounded-[2px] cursor-pointer transition-all duration-100 hover:brightness-150 hover:scale-110 flex-shrink-0"
-              style={{ background: GH_PALETTE[cell.level] }}
-              onMouseEnter={(e) => {
-                const label = cell.count === 0
-                  ? `No contributions on ${cell.date || "—"}`
-                  : `${cell.count} contribution${cell.count > 1 ? "s" : ""} on ${cell.date}`;
-                setTooltip({ text: label, x: e.clientX, y: e.clientY });
-              }}
-              onMouseMove={(e) => setTooltip(t => t ? { ...t, x: e.clientX, y: e.clientY } : t)}
-              onMouseLeave={() => setTooltip(null)}
-            />
-          ))}
-        </div>
+      <div className="eg-github-grid-wrap">
+        {isLoading ? (
+          <div className="eg-github-grid eg-github-grid--skeleton" aria-hidden="true">
+            {Array.from({ length: 91 }, (_, index) => (
+              <span key={index} className="eg-gh-cell motion-skeleton" />
+            ))}
+          </div>
+        ) : (
+          <div className="eg-github-grid" style={{
+            display: "grid",
+            gridTemplateColumns: `repeat(${Math.ceil(cells.length / 7)}, 11px)`,
+            gridTemplateRows: "repeat(7, 11px)",
+            gap: 3,
+          }}>
+            {Array.from({ length: 7 }, (_, weekIndex) => (
+              <React.Fragment key={weekIndex}>
+                {Array.from({ length: Math.ceil(cells.length / 7) }, (_, dayIndex) => {
+                  const cellIndex = dayIndex * 7 + weekIndex;
+                  const cell = cells[cellIndex];
+                  return cell ? (
+                    <div
+                      key={cellIndex}
+                      className="eg-gh-cell"
+                      style={getCellStyle(cell, cellIndex)}
+                      onMouseEnter={e => setTooltip({ text: getHoverText(cell), x: e.clientX, y: e.clientY })}
+                      onMouseMove={e => setTooltip(t => t ? { ...t, x: e.clientX, y: e.clientY } : t)}
+                      onMouseLeave={() => setTooltip(null)}
+                    />
+                  ) : null;
+                })}
+              </React.Fragment>
+            ))}
+          </div>
+        )}
       </div>
 
-      <p className="text-[9px] tracking-wider" style={{ color: "#4a7a4b", fontFamily: 'var(--font-mono)' }}>
-        {lastPushText ? `Last pushed · ${lastPushText}` : "Last pushed · —"}
-      </p>
+      <div className="eg-github-meta">
+        <span className="eg-github-last">{lastText ? `Last pushed · ${lastText}` : "Last pushed · —"}</span>
+      </div>
 
       {tooltip && typeof document !== 'undefined' && createPortal(
-        <div className="fixed z-[9999] pointer-events-none px-2.5 py-1.5 rounded-lg text-[10px] font-medium"
-          style={{
-            left: tooltip.x + 12, top: tooltip.y - 36,
-            background: "#0d1a0e", border: "1px solid rgba(190,242,100,0.25)",
-            color: "#bef264", fontFamily: 'var(--font-mono)',
-            whiteSpace: "nowrap", boxShadow: "0 4px 20px rgba(0,0,0,0.7)",
-          }}>
+        <div style={{
+          position: "fixed", zIndex: 9999, pointerEvents: "none",
+          left: tooltip.x + 12, top: tooltip.y - 36,
+          padding: "6px 10px", borderRadius: 8,
+          background: "#0d1a0e", border: "1px solid rgba(190,242,100,0.25)",
+          color: "#bef264", fontFamily: "var(--font-mono)", fontSize: 10,
+          whiteSpace: "nowrap", boxShadow: "0 4px 20px rgba(0,0,0,0.7)",
+        }}>
           {tooltip.text}
         </div>,
         document.body
@@ -434,317 +512,875 @@ function BentoItemGithubActivity() {
   );
 }
 
-// ── CARD 6: TECH STACK ────────────────────────────────────────────────────
+// ── CARD: TECH STACK ───────────────────────────────────────────────────────
 
-// Add/remove techs from this array freely
-const TECH_STACK = [
-    { name: "TypeScript", icon: "https://cdn.simpleicons.org/typescript/3178C6" },
-    { name: "JavaScript", icon: "https://cdn.simpleicons.org/javascript/F7DF1E" },
-    { name: "Node.js", icon: "https://cdn.simpleicons.org/nodedotjs/339933" },
-    { name: "Next.js", icon: "https://cdn.simpleicons.org/nextdotjs/ffffff" },
-    { name: "React", icon: "https://cdn.simpleicons.org/react/61DAFB" },
-    { name: "Express", icon: "https://cdn.simpleicons.org/express/ffffff" },
-    { name: "NestJS", icon: "https://cdn.simpleicons.org/nestjs/E0234E" },
-    { name: "PostgreSQL", icon: "https://cdn.simpleicons.org/postgresql/4169E1" },
-    { name: "MongoDB", icon: "https://cdn.simpleicons.org/mongodb/47A248" },
-    { name: "Prisma", icon: "https://cdn.simpleicons.org/prisma/ffffff" },
-    { name: "Redis", icon: "https://cdn.simpleicons.org/redis/FF4438" },
-    { name: "Solana", icon: "https://cdn.simpleicons.org/solana/9945FF" },
-    { name: "Ethereum", icon: "https://cdn.simpleicons.org/ethereum/ffffff" },
-    { name: "Docker", icon: "https://cdn.simpleicons.org/docker/2496ED" },
-    { name: "Tailwind", icon: "https://cdn.simpleicons.org/tailwindcss/06B6D4" },
-    { name: "Git", icon: "https://cdn.simpleicons.org/git/F05032" },
-    { name: "Vercel", icon: "https://cdn.simpleicons.org/vercel/ffffff" },
+const TECH = [
+  { name: "TypeScript", icon: "https://cdn.simpleicons.org/typescript/3178C6" },
+  { name: "JavaScript", icon: "https://cdn.simpleicons.org/javascript/F7DF1E" },
+  { name: "Node.js", icon: "https://cdn.simpleicons.org/nodedotjs/339933" },
+  { name: "Next.js", icon: "https://cdn.simpleicons.org/nextdotjs/ffffff" },
+  { name: "React", icon: "https://cdn.simpleicons.org/react/61DAFB" },
+  { name: "Express", icon: "https://cdn.simpleicons.org/express/ffffff" },
+  { name: "NestJS", icon: "https://cdn.simpleicons.org/nestjs/E0234E" },
+  { name: "PostgreSQL", icon: "https://cdn.simpleicons.org/postgresql/4169E1" },
+  { name: "MongoDB", icon: "https://cdn.simpleicons.org/mongodb/47A248" },
+  { name: "Prisma", icon: "https://cdn.simpleicons.org/prisma/ffffff" },
+  { name: "Redis", icon: "https://cdn.simpleicons.org/redis/FF4438" },
+  { name: "Solana", icon: "https://cdn.simpleicons.org/solana/9945FF" },
+  { name: "Ethereum", icon: "https://cdn.simpleicons.org/ethereum/ffffff" },
+  { name: "Docker", icon: "https://cdn.simpleicons.org/docker/2496ED" },
+  { name: "Tailwind", icon: "https://cdn.simpleicons.org/tailwindcss/06B6D4" },
+  { name: "Git", icon: "https://cdn.simpleicons.org/git/F05032" },
+  { name: "Vercel", icon: "https://cdn.simpleicons.org/vercel/ffffff" },
 ];
+const MARQUEE_ITEMS = [...TECH, ...TECH];
 
-const MARQUEE_ITEMS = [...TECH_STACK, ...TECH_STACK]; // duplicate for seamless loop
+function CardTechStack() {
+  return (
+    <div className="eg-tech">
+      <div className="eg-tech-header">
+        <Pill icon={StackIcon} label="Tech Stack" />
+        <p className="eg-tech-sub">
+          Primarily working within the JavaScript ecosystem — but always open to whatever stack gets the job done.
+        </p>
+      </div>
 
-function TechStackMarquee() {
-    return (
-      <div
-        className="relative w-full overflow-hidden"
-        style={{ maskImage: 'linear-gradient(to right, transparent, black 12%, black 88%, transparent)' }}
-      >
-        <div className="flex gap-5 tech-marquee">
-          {MARQUEE_ITEMS.map((tech, i) => (
-            <div
-              key={i}
-              className="flex flex-col items-center gap-1.5 flex-shrink-0 group/tech"
-              style={{ minWidth: 44 }}
-            >
-              <div
-                className="tech-tile flex items-center justify-center rounded-xl transition-all duration-300 group-hover/tech:scale-110"
-                style={{
-                  width: 40, height: 40,
-                  background: "rgba(255,255,255,0.035)",
-                  border: "1px solid rgba(190,242,100,0.1)",
-                  boxShadow: "inset 0 1px 0 rgba(255,255,255,0.04)",
-                }}
-              >
-                <img
-                  className="tech-tile-icon"
-                  src={tech.icon}
-                  alt={tech.name}
-                  style={{
-                    width: 20,
-                    height: 20,
-                    objectFit: 'contain',
-                    filter: 'grayscale(1) brightness(1.9) contrast(1.05)',
-                    opacity: 0.9,
-                  }}
-                />
+      <div className="eg-tech-marquee-wrap">
+        <div className="eg-tech-marquee">
+          {MARQUEE_ITEMS.map((t, i) => (
+            <div key={i} className="eg-tech-item">
+              <div className="eg-tech-tile">
+                <img src={t.icon} alt={t.name} className="eg-tech-icon" />
               </div>
-              {/* Tech name fades in on hover */}
-              <span
-                className="text-[8px] tracking-wide opacity-0 group-hover/tech:opacity-100 transition-opacity duration-200"
-                style={{ color: "#8fbe91", fontFamily: 'var(--font-mono)', whiteSpace: 'nowrap' }}
-              >
-                {tech.name}
-              </span>
+              <span className="eg-tech-name">{t.name}</span>
             </div>
           ))}
         </div>
       </div>
-    );
+    </div>
+  );
 }
 
-function BentoItemTechStack() {
-    return (
-      <div className="flex h-full flex-col gap-4 p-5">
-        <div className="flex items-center justify-between">
-          <BentoBadge icon={StackIcon} text="Tech stack" className={{ component: "w-fit" }} />
-        </div>
-        <div className="flex-grow flex items-center overflow-hidden">
-          <TechStackMarquee />
-        </div>
-        <p className="text-[0.92rem] leading-relaxed" style={{ color: "#aab5c5", fontFamily: 'var(--font-sans)' }}>
-        Primarily working within the JavaScript ecosystem — but always open to whatever stack gets the job done.
-        </p>
+// ── CARD: CTA ──────────────────────────────────────────────────────────────
+
+function CardCTA() {
+  return (
+    <a href="/projects" className="eg-cta" data-nav>
+      <div className="eg-cta-left">
+        <p className="eg-cta-eyebrow">Work</p>
+        <p className="eg-cta-heading">View Projects</p>
       </div>
-    );
+      <div className="eg-cta-arrow">
+        <ArrowRightIcon style={{ width: 16, height: 16 }} />
+      </div>
+    </a>
+  );
 }
 
-// ── CARD 7: CTA ───────────────────────────────────────────────────────────
+// ── CARD: SOCIALS ──────────────────────────────────────────────────────────
 
-function BentoItemCTA() {
-    return (
-      <a href="/projects" className="group/cta nav-link flex size-full items-center justify-between px-5 py-4" data-nav>
-        <div>
-          <p className="text-[9px] uppercase tracking-[0.2em] mb-0.5" style={{ color: "#4a7a4b", fontFamily: 'var(--font-mono)' }}>Work</p>
-          <p className="text-slate-300 text-sm font-medium" style={{ fontFamily: 'var(--font-display)', letterSpacing: "-0.02em" }}>Discover more projects</p>
-        </div>
-        <div className="flex items-center justify-center rounded-full transition-all duration-300 group-hover/cta:scale-110"
-          style={{ width: 34, height: 34, border: "1px solid rgba(190,242,100,0.12)" }}>
-          <ArrowRightIcon className="size-4 text-slate-600 transition-all duration-300 group-hover/cta:-rotate-45 group-hover/cta:text-lime-400" />
-        </div>
-      </a>
-    );
+function CardSocialIcon({ icon: Icon, href, label }: { icon: ComponentType<IconProps>; href: string; label: string }) {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-label={label}
+      className="eg-social-single"
+    >
+      <Icon className="eg-social-icon" />
+    </a>
+  );
 }
 
 // ── MAIN ───────────────────────────────────────────────────────────────────
 
 export default function BentoGrid() {
-    const bentoRef = useRef<HTMLDivElement | null>(null);
+  const ref = useRef<HTMLDivElement>(null);
+  const sectionRef = useRef<HTMLDivElement>(null);
 
-    useEffect(() => {
-      const bento = bentoRef.current;
-      if (!bento) return;
-      const onMove = (e: MouseEvent) => {
-        for (const card of Array.from(bento.getElementsByClassName("card") as HTMLCollectionOf<HTMLElement>)) {
-          const r = card.getBoundingClientRect();
-          card.style.setProperty("--mx", `${e.clientX - r.left}px`);
-          card.style.setProperty("--my", `${e.clientY - r.top}px`);
-        }
-      };
-      bento.addEventListener("mousemove", onMove);
-      return () => bento.removeEventListener("mousemove", onMove);
-    }, []);
+  useEffect(() => {
+    const section = document.querySelector('.eg-section');
+    if (!section) return;
+    let frameId = 0;
+    let lastScrollY = window.scrollY;
 
-    const socialMedias = [
-      { icon: XIcon, href: 'https://twitter.com/_elijahemmanuel' },
-      { icon: LinkedIn, href: 'https://linkedin.com/in/elijahemmanuel' },
-      { icon: HashNode, href: 'https://hashnode.com/@elijah-hash' },
-    ];
+    section.classList.add('eg-section--animated');
 
-    return (
-      <>
-        <style>{`
+    // Immediately visible check
+    const rect = section.getBoundingClientRect();
+    if (rect.top < window.innerHeight * 0.85) {
+      frameId = window.requestAnimationFrame(() => {
+        section.classList.add('eg-section--visible');
+      });
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          const currentScrollY = window.scrollY;
+          const isScrollingDown = currentScrollY > lastScrollY;
+          lastScrollY = currentScrollY;
+
+          if (entry.isIntersecting && isScrollingDown) {
+            section.classList.add('eg-section--visible');
+          }
+
+          if (!entry.isIntersecting && !isScrollingDown) {
+            section.classList.remove('eg-section--visible');
+          }
+        });
+      },
+      {
+        threshold: 0.12,
+        rootMargin: '0px 0px -8% 0px'
+      },
+    );
+
+    observer.observe(section);
+    return () => {
+      window.cancelAnimationFrame(frameId);
+      observer.disconnect();
+    };
+  }, []);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const cards = Array.from(el.getElementsByClassName('eg-card') as HTMLCollectionOf<HTMLElement>).map((card) => ({
+      element: card,
+      x: 0,
+      y: 0,
+      targetX: 0,
+      targetY: 0,
+    }));
+    let frameId = 0;
+
+    const render = () => {
+      cards.forEach((card) => {
+        card.x += (card.targetX - card.x) * 0.16;
+        card.y += (card.targetY - card.y) * 0.16;
+        card.element.style.setProperty('--mx', `${card.x}px`);
+        card.element.style.setProperty('--my', `${card.y}px`);
+      });
+      frameId = window.requestAnimationFrame(render);
+    };
+
+    const onMove = (event: MouseEvent) => {
+      cards.forEach((card) => {
+        const rect = card.element.getBoundingClientRect();
+        card.targetX = event.clientX - rect.left;
+        card.targetY = event.clientY - rect.top;
+      });
+    };
+
+    frameId = window.requestAnimationFrame(render);
+    el.addEventListener('mousemove', onMove);
+
+    return () => {
+      window.cancelAnimationFrame(frameId);
+      el.removeEventListener('mousemove', onMove);
+    };
+  }, []);
+
+  return (
+    <>
+      <style>{`
+/* ── TOKENS ── */
 :root {
-  --lime:         #bef264;
-  --card-bg:      #04070c;
-  --card-border:  #0e1a0f;
-  --font-sans:    'Geist', system-ui, sans-serif;
+  --lime: #bef264;
+  --bg: #04070c;
+  --border: #0e1a0f;
+  --font-sans: 'Geist', system-ui, sans-serif;
   --font-display: 'Geist', system-ui, sans-serif;
-  --font-mono:    'Geist Mono', 'JetBrains Mono', monospace;
+  --font-mono: 'Geist Mono','JetBrains Mono',monospace;
 }
 
-.card {
-  background: var(--card-bg);
+/* ── CARD ── */
+.eg-card {
   position: relative;
-  border-radius: 16px;
+  border-radius: 18px;
+  background: var(--bg);
   overflow: hidden;
-  transition: box-shadow 0.3s ease, transform 0.25s ease;
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  transition:
+    opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform, opacity;
 }
-.card::after {
+
+/* Only hide cards after JS has opted into the entrance animation */
+.eg-section.eg-section--animated:not(.eg-section--visible) .eg-card {
+  opacity: 0;
+  transform: translateY(24px) scale(0.97);
+  transition-delay: 0ms;
+}
+
+/* Entrance animation - triggered when section becomes visible */
+.eg-section--visible .eg-card {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  transition-delay: calc(var(--card-index, 0) * 60ms);
+}
+
+/* Larger cards (spanning multiple grid areas) animate slightly slower */
+.eg-card[style*="grid-column: 1 / 8"],
+.eg-card[style*="grid-column: 8 / 13"],
+.eg-card[style*="grid-row: 1 / 3"],
+.eg-card[style*="grid-row: 4 / 6"],
+.eg-c-about,
+.eg-c-mantra,
+.eg-c-github,
+.eg-c-tech {
+  transition-duration: calc(0.6s + 80ms);
+}
+
+/* Respect prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  .eg-card {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    transition: none;
+  }
+}
+.eg-card::after {
   content: "";
-  position: absolute;
-  inset: 0;
+  position: absolute; inset: 0;
   border-radius: inherit;
   background-image:
-    linear-gradient(rgba(190,242,100,0.025) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(190,242,100,0.025) 1px, transparent 1px);
+    linear-gradient(rgba(190,242,100,0.022) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(190,242,100,0.022) 1px, transparent 1px);
   background-size: 24px 24px;
-  pointer-events: none;
-  z-index: 1;
+  pointer-events: none; z-index: 1;
 }
-.card::before {
+.eg-card::before {
   content: "";
-  position: absolute;
-  inset: 0;
-  opacity: 0;
-  border-radius: inherit;
+  position: absolute; inset: 0;
+  opacity: 0; border-radius: inherit;
   pointer-events: none;
-  transition: opacity 0.35s ease;
-  background: radial-gradient(
-    600px circle at var(--mx, 50%) var(--my, 50%),
-    rgba(190,242,100,0.07),
-    transparent 50%
-  );
+  transition: opacity 0.35s;
+  background: radial-gradient(500px circle at var(--mx,50%) var(--my,50%), rgba(190,242,100,0.07), transparent 55%);
   z-index: 3;
 }
-.card:hover::before { opacity: 1; }
-.card:hover {
-  box-shadow:
-    0 0 0 1px rgba(190,242,100,0.18),
-    0 0 50px rgba(190,242,100,0.04),
-    0 12px 48px rgba(0,0,0,0.7);
-  transform: translateY(-1.5px);
+.eg-card:hover::before { opacity: 1; }
+.eg-card:hover {
+  box-shadow: 0 0 0 1px rgba(190,242,100,0.18), 0 20px 60px rgba(0,0,0,0.7);
+  transform: translateY(-6px) scale(1.02);
+  transition-delay: 0ms !important;
 }
-.card > .card-content {
-  background: var(--card-bg);
-  border: 1px solid var(--card-border);
-  border-radius: inherit;
-  flex-grow: 1;
-  inset: 1px;
-  position: absolute;
-  display: flex;
-  flex-direction: column;
+.eg-card-inner {
+  position: absolute; inset: 1px;
+  border-radius: 17px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  overflow: hidden;
   z-index: 2;
+  display: flex; flex-direction: column;
+  height: calc(100% - 2px);
 }
-.bento-badge {
-  background: rgba(4,7,12,0.92);
+
+/* ── PILL ── */
+.eg-pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 5px 10px 5px 8px;
+  border-radius: 999px;
+  background: rgba(4,7,12,0.9);
   border: 1px solid rgba(190,242,100,0.1);
-  backdrop-filter: blur(12px);
+  backdrop-filter: blur(10px);
+  width: fit-content; flex-shrink: 0;
 }
-.social-icon { color: rgba(255,255,255,0.82); transition: color 0.2s ease; }
-.card:hover .social-icon { color: #ffffff; }
-
-@keyframes vinyl-spin { to { transform: rotate(360deg); } }
-.vinyl-playing { animation: vinyl-spin 6s linear infinite; }
-
-@keyframes pulse-dot {
-  0%, 100% { opacity: 1; }
-  50%       { opacity: 0.4; }
-}
-.availability-dot { animation: pulse-dot 2s ease-in-out infinite; }
-
-.tech-tile {
-  transition: border-color 0.25s ease, background 0.25s ease, box-shadow 0.25s ease, transform 0.25s ease;
+.eg-pill-text {
+  font-family: var(--font-mono);
+  font-size: 9px; letter-spacing: 0.15em;
+  text-transform: uppercase; color: #4a7a4b;
 }
 
-.tech-tile-icon {
-  transition: filter 0.25s ease, opacity 0.25s ease, transform 0.25s ease;
+/* ── ABOUT ── */
+.eg-about {
+  position: relative;
+  display: flex; flex-direction: column;
+  height: 100%; padding: 20px 22px;
+  overflow: hidden; gap: 12px;
+}
+.eg-about-header { flex-shrink: 0; }
+.eg-about-role {
+  font-family: var(--font-display);
+  font-size: clamp(1.7rem, 2.4vw, 2.4rem);
+  font-weight: 800;
+  letter-spacing: -0.04em; line-height: 1.0;
+  color: #f0fdf4; flex-shrink: 0;
+  margin: 0;
+}
+.eg-about-desc {
+  font-family: var(--font-sans);
+  font-size: 0.82rem; line-height: 1.68;
+  color: #64748b; flex-shrink: 0;
+  margin: 0;
+}
+.eg-about-stats {
+  display: flex; gap: 8px;
+  margin-top: auto; flex-shrink: 0;
+}
+.eg-stat {
+  flex: 1; display: flex; flex-direction: column; gap: 3px;
+  padding: 10px 12px; border-radius: 10px;
+  background: rgba(190,242,100,0.03);
+  border: 1px solid rgba(190,242,100,0.07);
+  min-width: 0;
+}
+.eg-stat-val {
+  font-family: var(--font-display);
+  font-size: 1.1rem; font-weight: 700;
+  letter-spacing: -0.02em; color: #e2e8f0;
+}
+.eg-stat-label {
+  font-family: var(--font-mono);
+  font-size: 10px; letter-spacing: 0.12em;
+  text-transform: uppercase; color: #4a7a4b;
+}
+.eg-about-glow {
+  position: absolute; bottom: -30px; right: -30px;
+  width: 200px; height: 200px; pointer-events: none;
+  background: radial-gradient(circle, rgba(190,242,100,0.05) 0%, transparent 70%);
 }
 
-.group\\/tech:hover .tech-tile {
-  background: rgba(190,242,100,0.06);
-  border-color: rgba(190,242,100,0.22);
-  box-shadow: 0 0 20px rgba(190,242,100,0.08), inset 0 1px 0 rgba(255,255,255,0.05);
+/* ── MANTRA ── */
+.eg-mantra {
+  display: flex; flex-direction: column;
+  height: 100%; padding: 22px; overflow: hidden; position: relative;
+}
+.eg-mantra-body {
+  display: flex; flex-direction: column;
+  justify-content: flex-end; flex: 1; gap: 10px;
+  padding-top: 10px;
+}
+.eg-big-quote {
+  font-family: var(--font-display);
+  font-size: 8rem; font-weight: 900; line-height: 1;
+  color: rgba(190,242,100,0.04);
+  position: absolute; bottom: -10px; right: 8px;
+  pointer-events: none; user-select: none;
+}
+.eg-mantra-text {
+  font-family: var(--font-display);
+  font-size: clamp(1rem, 1.4vw, 1.35rem);
+  font-weight: 700; line-height: 1.38;
+  letter-spacing: -0.02em; color: #f0fdf4;
+  max-width: 14ch;
+}
+.eg-mantra-rule {
+  width: 28px; height: 1px;
+  background: rgba(190,242,100,0.25);
+}
+.eg-mantra-attr {
+  font-family: var(--font-mono);
+  font-size: 9px; letter-spacing: 0.2em;
+  text-transform: uppercase; color: #4a7a4b;
 }
 
-.group\\/tech:hover .tech-tile-icon {
-  filter: grayscale(1) brightness(2.15) contrast(1.08);
-  opacity: 1;
-  transform: scale(1.04);
+/* ── NOW PLAYING ── */
+.eg-playing {
+  display: flex; flex-direction: column;
+  height: 100%; padding: 18px; gap: 16px;
+  text-decoration: none;
+  color: inherit;
+}
+.eg-playing-content {
+  display: flex; align-items: center; gap: 16px; flex: 1;
+}
+.eg-album-wrap { position: relative; flex-shrink: 0; }
+.eg-album-img {
+  width: 68px; height: 68px;
+  border-radius: 12px; object-fit: cover; display: block;
+}
+.eg-album-pulse {
+  position: absolute; inset: -3px; border-radius: 15px;
+  border: 1px solid rgba(190,242,100,0.18);
+  animation: eg-pulse 2s ease-in-out infinite;
+}
+@keyframes eg-pulse {
+  0%,100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.35; transform: scale(1.04); }
+}
+.eg-playing-info { display: flex; flex-direction: column; gap: 5px; min-width: 0; flex: 1; }
+.eg-skeleton-line {
+  height: 10px;
+  border-radius: 999px;
+}
+.eg-playing-title {
+  font-family: var(--font-display);
+  font-size: 1.05rem; font-weight: 700;
+  letter-spacing: -0.02em; color: #f0fdf4;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.eg-playing-artist {
+  font-family: var(--font-mono);
+  font-size: 0.68rem; letter-spacing: 0.16em;
+  color: #4a7a4b; text-transform: uppercase;
+}
+.eg-waveform {
+  display: flex; align-items: flex-end; gap: 2px;
+  height: 20px; margin-top: 4px;
+}
+.eg-wave-bar {
+  width: 3px; border-radius: 2px;
+  background: rgba(190,242,100,0.4);
+  height: var(--h, 10px);
+  animation: eg-wave 1.2s ease-in-out infinite alternate;
+  animation-delay: var(--delay, 0s);
+}
+@keyframes eg-wave {
+  from { transform: scaleY(0.3); }
+  to { transform: scaleY(1); }
 }
 
-@keyframes marquee {
-  from { transform: translateX(0); }
-  to   { transform: translateX(-50%); }
+/* ── TIME ── */
+.eg-time {
+  position: relative;
+  display: flex; flex-direction: column;
+  height: 100%; padding: 18px; gap: 12px; overflow: hidden;
 }
-.tech-marquee {
-  animation: marquee 30s linear infinite;
-  width: max-content;
+.eg-time-header { flex-shrink: 0; }
+.eg-clocks {
+  display: flex; align-items: center;
+  justify-content: space-between; gap: 8px; flex-shrink: 0;
 }
-.tech-marquee:hover { animation-play-state: paused; }
+.eg-clock-col { display: flex; flex-direction: column; gap: 3px; }
+.eg-clock-right { align-items: flex-end; }
+.eg-clock-zone {
+  font-family: var(--font-mono);
+  font-size: 10px; letter-spacing: 0.15em; font-weight: 700;
+  text-transform: uppercase; color: #4a7a4b;
+}
+.eg-clock-time {
+  font-family: var(--font-display);
+  font-size: 1.34rem; font-weight: 900;
+  letter-spacing: -0.04em; line-height: 1; color: #e2e8f0;
+}
+.eg-clock-hint { font-family: var(--font-mono); font-size: 10px; font-weight: 700; color: #4c744d; }
+.eg-clock-sep { font-family: var(--font-mono); font-size: 0.95rem; font-weight: 700; color: #2d4a2e; }
+.eg-time-status {
+  display: flex; flex-direction: column; gap: 5px;
+  margin-top: auto;
+  padding-top: 16px;
+}
+.eg-status-dot-wrap { display: flex; align-items: center; gap: 7px; }
+.eg-status-dot {
+  width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;
+  animation: eg-pulse 2s ease-in-out infinite;
+}
+.eg-status-label {
+  font-family: var(--font-sans);
+  font-size: 1.08rem; font-weight: 800;
+  line-height: 1.2;
+}
+.eg-status-sub {
+  font-family: var(--font-mono);
+  font-size: 0.84rem; line-height: 1.35; font-weight: 700;
+  color: #5f8f60; font-style: italic;
+  padding-left: 14px; margin: 0;
+}
+.eg-watermark-247 {
+  position: absolute; right: 6px; bottom: -6px;
+  font-family: var(--font-display);
+  font-size: 5rem; font-weight: 900;
+  color: rgba(190,242,100,0.03);
+  pointer-events: none; user-select: none; line-height: 1;
+}
 
-.gh-grid-scroll {
+/* ── GITHUB ── */
+.eg-github {
+  display: flex; flex-direction: column;
+  height: 100%; padding: 18px; gap: 10px; overflow: hidden;
+}
+.eg-github-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.eg-github-count {
+  font-family: var(--font-mono);
+  font-size: 10px; letter-spacing: 0.12em;
+  transition: color 0.15s;
+  text-align: right;
+}
+.eg-github-grid-wrap {
+  flex: 1; overflow-x: auto; overflow-y: hidden;
+  display: flex; align-items: center;
   scrollbar-width: thin;
   scrollbar-color: rgba(190,242,100,0.3) rgba(255,255,255,0.04);
 }
-.gh-grid-scroll::-webkit-scrollbar { height: 6px; }
-.gh-grid-scroll::-webkit-scrollbar-track { background: rgba(255,255,255,0.04); border-radius: 3px; }
-.gh-grid-scroll::-webkit-scrollbar-thumb { background: rgba(190,242,100,0.3); border-radius: 3px; }
-.gh-grid-scroll::-webkit-scrollbar-thumb:hover { background: rgba(190,242,100,0.5); }
+.eg-github-grid-wrap::-webkit-scrollbar { height: 4px; }
+.eg-github-grid-wrap::-webkit-scrollbar-track { background: rgba(255,255,255,0.04); border-radius: 2px; }
+.eg-github-grid-wrap::-webkit-scrollbar-thumb { background: rgba(190,242,100,0.3); border-radius: 2px; }
+.eg-github-grid { flex-shrink: 0; }
+.eg-github-grid--skeleton {
+  display: grid;
+  grid-template-columns: repeat(13, 11px);
+  grid-template-rows: repeat(7, 11px);
+  gap: 3px;
+}
+.eg-gh-cell {
+  width: 11px; height: 11px; border-radius: 2px; cursor: pointer;
+  transition: filter 0.1s, transform 0.1s, opacity 0.15s, box-shadow 0.15s;
+}
+.eg-gh-cell:hover { filter: brightness(1.6); transform: scale(1.15); }
+.eg-github-meta {
+  display: flex; align-items: center; justify-content: flex-end;
+  gap: 12px; margin-top: auto;
+}
+.eg-github-last {
+  font-family: var(--font-mono);
+  font-size: 10px; letter-spacing: 0.1em; color: #4a7a4b;
+  text-align: right;
+}
+
+/* ── TECH STACK ── */
+.eg-tech {
+  display: flex; flex-direction: column;
+  height: 100%; padding: 18px; gap: 12px; overflow: hidden;
+}
+.eg-tech-header { display: flex; flex-direction: column; gap: 10px; }
+.eg-tech-sub {
+  font-family: var(--font-sans);
+  font-size: 0.95rem; line-height: 1.7; color: #7a8aa0;
+}
+.eg-tech-marquee-wrap {
+  flex: 1; overflow: hidden; display: flex; align-items: center;
+  mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+}
+.eg-tech-marquee {
+  display: flex; gap: 14px; width: max-content;
+  animation: eg-marquee 30s linear infinite;
+}
+.eg-tech-marquee:hover { animation-play-state: paused; }
+@keyframes eg-marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+.eg-tech-item {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 5px; flex-shrink: 0;
+}
+.eg-tech-tile {
+  width: 38px; height: 38px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(190,242,100,0.08);
+  transition: background 0.25s, border-color 0.25s, transform 0.25s;
+}
+.eg-tech-item:hover .eg-tech-tile {
+  background: rgba(190,242,100,0.06);
+  border-color: rgba(190,242,100,0.22);
+  transform: scale(1.12);
+}
+.eg-tech-icon {
+  width: 18px; height: 18px; object-fit: contain;
+  filter: grayscale(1) brightness(1.9); opacity: 0.85;
+  transition: filter 0.25s, opacity 0.25s;
+}
+.eg-tech-item:hover .eg-tech-icon {
+  filter: grayscale(0) brightness(1.1); opacity: 1;
+}
+.eg-tech-name {
+  font-family: var(--font-mono);
+  font-size: 7px; letter-spacing: 0.06em; color: #4a7a4b;
+  opacity: 0; transition: opacity 0.2s; white-space: nowrap;
+}
+.eg-tech-item:hover .eg-tech-name { opacity: 1; }
+
+/* ── CTA ── */
+.eg-cta {
+  display: flex; align-items: center; justify-content: space-between;
+  height: 100%; padding: 18px 20px; text-decoration: none; gap: 12px;
+}
+.eg-cta-left { display: flex; flex-direction: column; gap: 4px; }
+.eg-cta-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 9px; letter-spacing: 0.2em;
+  text-transform: uppercase; color: #4a7a4b;
+}
+.eg-cta-heading {
+  font-family: var(--font-display);
+  font-size: 1.05rem; font-weight: 600;
+  letter-spacing: -0.02em; color: #94a3b8;
+  white-space: nowrap;
+}
+.eg-cta-arrow {
+  width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  border: 1px solid rgba(190,242,100,0.12);
+  color: #4a7a4b;
+  transition: color 0.25s, border-color 0.25s, transform 0.25s;
+}
+.eg-cta:hover .eg-cta-arrow {
+  color: #bef264; border-color: rgba(190,242,100,0.35);
+  transform: rotate(-45deg);
+}
+
+/* ── SOCIAL SINGLE ICON ── */
+.eg-social-single {
+  display: flex; align-items: center; justify-content: center;
+  width: 100%; height: 100%;
+  color: rgba(255,255,255,0.45);
+  text-decoration: none;
+  transition: color 0.2s, transform 0.2s;
+}
+.eg-social-icon {
+  width: 22px; height: 22px;
+}
+.eg-social-single:hover { color: #fff; transform: scale(1.1); }
+
+/* ══════════════════════════════════════════════
+   LAYOUT — all grid placement lives here so
+   media queries can actually override it
+   ══════════════════════════════════════════════ */
+
+.eg-section {
+  width: 100%;
+  padding: 4rem var(--page-gutter, 1.5rem) 0.75rem;
+}
+
+/* ── DESKTOP (≥ 1024px) ── */
+.eg-grid {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  grid-template-rows: 180px 180px 90px 120px 120px;
+  gap: 0.6rem;
+  width: 100%;
+}
+.eg-c-about    { grid-column: 1 / 8;  grid-row: 1 / 3; }
+.eg-c-mantra   { grid-column: 8 / 10; grid-row: 1 / 3; }
+.eg-c-playing  { grid-column: 10 / 13; grid-row: 1 / 2; }
+.eg-c-time     { grid-column: 10 / 13; grid-row: 2 / 4; }
+.eg-c-social-1 { grid-column: 1 / 2;  grid-row: 3 / 4; }
+.eg-c-social-2 { grid-column: 2 / 3;  grid-row: 3 / 4; }
+.eg-c-social-3 { grid-column: 3 / 4;  grid-row: 3 / 4; }
+.eg-c-cta      { grid-column: 4 / 10; grid-row: 3 / 4; }
+.eg-c-github   { grid-column: 1 / 7;  grid-row: 4 / 6; }
+.eg-c-tech     { grid-column: 7 / 13; grid-row: 4 / 6; }
+
+/* ── TABLET (768px – 1023px) ── */
+@media (max-width: 1023px) {
+  .eg-grid {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    grid-template-rows: 220px 160px 170px 80px 150px 140px;
+    gap: 0.55rem;
+  }
+  .eg-c-about    { grid-column: 1 / 7; grid-row: 1 / 2; }
+  .eg-c-playing  { grid-column: 1 / 4; grid-row: 2 / 3; }
+  .eg-c-mantra   { grid-column: 4 / 7; grid-row: 2 / 4; }
+  .eg-c-time     { grid-column: 1 / 4; grid-row: 3 / 4; }
+  .eg-c-social-1 { grid-column: 1 / 2; grid-row: 4 / 5; }
+  .eg-c-social-2 { grid-column: 2 / 3; grid-row: 4 / 5; }
+  .eg-c-social-3 { grid-column: 3 / 4; grid-row: 4 / 5; }
+  .eg-c-cta      { grid-column: 4 / 7; grid-row: 4 / 5; }
+  .eg-c-github   { grid-column: 1 / 7; grid-row: 5 / 6; }
+  .eg-c-tech     { grid-column: 1 / 7; grid-row: 6 / 7; }
+
+  .eg-about-role { font-size: clamp(1.6rem, 3.5vw, 2.2rem); }
+  .eg-about-desc { font-size: 0.82rem; }
+  
+  /* Social icons - make taller on tablet */
+  .eg-social-single { 
+    height: 65px;
+  }
+  .eg-social-icon { width: 26px; height: 26px; }
+}
+
+/* ── MOBILE (< 768px) ── */
+@media (max-width: 767px) {
+  .eg-section { padding: 2.5rem 1rem 0.75rem; }
+
+  .eg-grid {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    grid-template-rows: auto 184px 184px 98px 210px 230px;
+    gap: 0.45rem;
+  }
+  .eg-c-about    { grid-column: 1 / 7; grid-row: 1 / 2; min-height: 300px; }
+  .eg-c-playing  { grid-column: 1 / 4; grid-row: 2 / 3; }
+  .eg-c-mantra   { grid-column: 4 / 7; grid-row: 2 / 3; }
+  .eg-c-time     { grid-column: 1 / 7; grid-row: 3 / 4; }
+  .eg-c-social-1 { grid-column: 1 / 3; grid-row: 4 / 5; }
+  .eg-c-social-2 { grid-column: 3 / 5; grid-row: 4 / 5; }
+  .eg-c-social-3 { grid-column: 5 / 7; grid-row: 4 / 5; }
+  .eg-c-github   { grid-column: 1 / 7; grid-row: 5 / 6; }
+  .eg-c-tech     { grid-column: 1 / 7; grid-row: 6 / 7; }
+
+  /* Content tweaks */
+  .eg-about { padding: 16px 18px; gap: 10px; }
+  .eg-about-role { font-size: clamp(1.5rem, 7vw, 2rem); }
+  .eg-about-desc { 
+    font-size: 0.78rem; 
+    line-height: 1.6; 
+    display: -webkit-box;
+    -webkit-line-clamp: 6;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .eg-stat { padding: 8px 10px; }
+  .eg-stat-val { font-size: 0.95rem; }
+  .eg-stat-label { font-size: 9px; }
+  .eg-mantra { padding: 18px; }
+  .eg-mantra-body { gap: 12px; justify-content: space-between; padding-top: 14px; }
+  .eg-mantra-text { font-size: clamp(1rem, 4vw, 1.2rem); font-weight: 800; line-height: 1.5; }
+  .eg-mantra-attr { font-size: 10px; }
+  .eg-big-quote { font-size: 5.5rem; }
+  .eg-playing { padding: 16px; gap: 14px; }
+  .eg-pill { gap: 5px; padding: 4px 8px 4px 7px; }
+  .eg-pill-text { font-size: 8px; letter-spacing: 0.12em; white-space: nowrap; }
+  .eg-playing-content { gap: 14px; }
+  .eg-album-img { width: 64px; height: 64px; }
+  .eg-playing-title { font-size: 1rem; font-weight: 800; }
+  .eg-playing-artist { font-size: 0.74rem; line-height: 1.5; }
+  .eg-time { padding: 16px; gap: 12px; }
+  .eg-clock-time { font-size: 1.18rem; font-weight: 900; }
+  .eg-clock-zone { font-size: 10px; font-weight: 700; }
+  .eg-clock-hint { font-size: 10px; font-weight: 700; }
+  .eg-status-label { font-size: 0.95rem; font-weight: 900; line-height: 1.3; }
+  .eg-time-status { gap: 3px; margin-top: 4px; }
+  .eg-status-sub { font-size: 0.76rem; padding-left: 14px; line-height: 1.3; font-weight: 600; }
+  .eg-watermark-247 { font-size: 3.5rem; }
+  .eg-github { padding: 16px; gap: 12px; min-height: 0; }
+  .eg-github-header { gap: 8px; align-items: flex-start; }
+  .eg-gh-cell { width: 9px; height: 9px; }
+  .eg-github-grid-wrap { 
+    scrollbar-width: none; 
+    overflow-x: auto;
+    overflow-y: hidden;
+    align-items: flex-start;
+    padding-bottom: 4px;
+  }
+  .eg-github-grid-wrap::-webkit-scrollbar { display: none; }
+  .eg-github-meta { 
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px; 
+    margin-top: auto;
+    flex-wrap: wrap;
+  }
+  .eg-github-count, .eg-github-last { 
+    font-size: 9px; 
+    line-height: 1.4;
+  }
+  .eg-tech { padding: 16px; gap: 14px; min-height: 0; }
+  .eg-tech-sub { font-size: 0.88rem; line-height: 1.7; }
+  .eg-tech-marquee-wrap {
+    overflow: hidden;
+    mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+    align-items: center;
+  }
+  .eg-tech-marquee {
+    display: flex;
+    gap: 12px;
+    width: max-content;
+    animation: eg-marquee 30s linear infinite;
+  }
+  .eg-tech-item:nth-child(n + 11) { display: flex; }
+  .eg-tech-item { gap: 6px; }
+  .eg-tech-tile { width: 40px; height: 40px; border-radius: 10px; }
+  .eg-tech-icon { width: 18px; height: 18px; }
+  .eg-tech-name {
+    opacity: 0;
+    font-size: 7px;
+    text-align: center;
+    line-height: 1.2;
+  }
+  .eg-cta { padding: 14px 16px; }
+  .eg-cta-heading { display: none; }
+  .eg-cta-arrow { width: 32px; height: 32px; }
+  
+  /* Hide CTA card completely on mobile */
+  .eg-c-cta { display: none; }
+  
+  /* Make social icons much bigger and bolder on mobile */
+  .eg-social-single {
+    width: 100%;
+    height: 100%;
+    min-height: 98px;
+    border-radius: 16px;
+    color: rgba(255,255,255,0.62);
+  }
+  .eg-social-icon {
+    width: 30px;
+    height: 30px;
+    stroke-width: 2.25;
+  }
+}
+
+/* ── SMALL MOBILE (< 480px) ── */
+@media (max-width: 479px) {
+  .eg-grid { gap: 0.35rem; }
+  .eg-section { padding: 2rem 0.75rem 0.5rem; }
+  .eg-about-role { font-size: clamp(1.3rem, 8vw, 1.7rem); }
+  .eg-about-desc { font-size: 0.76rem; }
+  .eg-clock-time { font-size: 0.82rem; letter-spacing: -0.05em; }
+  .eg-playing-title { font-size: 0.8rem; }
+  .eg-album-img { width: 48px; height: 48px; }
+  .eg-pill { gap: 4px; padding: 4px 7px 4px 6px; }
+  .eg-pill-text { font-size: 7px; letter-spacing: 0.1em; }
+  .eg-status-label { font-size: 0.92rem; }
+  .eg-stat-label { font-size: 8px; }
+  .eg-grid { grid-template-rows: auto 190px 195px 92px 210px 230px; }
+  .eg-social-single { min-height: 92px; }
+  .eg-social-icon { width: 28px; height: 28px; }
+  .eg-gh-cell { width: 8px; height: 8px; }
+  .eg-tech-marquee { gap: 10px; }
+  .eg-tech-sub { font-size: 0.84rem; }
+  .eg-time { padding: 14px; gap: 10px; }
+  .eg-clock-time { font-size: 0.78rem; letter-spacing: -0.05em; }
+  .eg-clock-zone { font-size: 9px; }
+  .eg-clock-hint { font-size: 9px; }
+  .eg-status-label { font-size: 0.88rem; font-weight: 800; line-height: 1.2; }
+  .eg-time-status { gap: 2px; margin-top: 3px; }
+  .eg-status-sub { font-size: 0.70rem; padding-left: 14px; line-height: 1.2; font-weight: 600; }
+  .eg-mantra { padding: 16px; }
+  .eg-mantra-body { padding-top: 12px; }
+  .eg-mantra-text { font-size: 0.96rem; }
+}
+
+/* ── REDUCED MOTION ── */
+@media (prefers-reduced-motion: reduce) {
+  .eg-tech-marquee,
+  .eg-wave-bar,
+  .eg-album-pulse,
+  .eg-status-dot { animation: none !important; }
+  
+  /* Skip entrance animation entirely */
+  .eg-card {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    transition: none;
+  }
+}
 
 * { box-sizing: border-box; }
       `}</style>
 
-      <div id="about" style={{ width: "100%", padding: `0 var(--page-gutter) 0.75rem`, paddingTop: "0.5rem" }}>
-        <div
-          ref={bentoRef}
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(12, minmax(0,1fr))",
-              gridTemplateRows: "160px 160px 96px 110px 110px",
-              gap: "0.65rem",
-              width: "100%",
-              margin: "0 auto",
-            }}
-          >
-            {/* ── ROW 1 ── */}
-            <BentoCard style={{ gridColumn: "1 / 4", gridRow: "1 / 3" }}>
-              <BentoItemMotto />
-            </BentoCard>
+      <div id="about" className="eg-section" ref={sectionRef}>
+        <div ref={ref} className="eg-grid">
+          <Card className="eg-c-about" cardIndex={0}>     <CardAbout />      </Card>
+          <Card className="eg-c-mantra" cardIndex={1}>    <CardMantra />     </Card>
+          <Card className="eg-c-playing" cardIndex={2}>   <CardNowPlaying /> </Card>
+          <Card className="eg-c-time" cardIndex={3}>      <CardTime />       </Card>
 
-            <BentoCard style={{ gridColumn: "4 / 9", gridRow: "1 / 3" }}>
-              <BentoItemAbout />
-            </BentoCard>
+          <Card className="eg-c-social-1" cardIndex={4}>
+            <CardSocialIcon icon={XIcon} href="https://twitter.com/_elijahemmanuel" label="X" />
+          </Card>
+          <Card className="eg-c-social-2" cardIndex={5}>
+            <CardSocialIcon icon={LinkedIn} href="https://linkedin.com/in/elijahemmanuel" label="LinkedIn" />
+          </Card>
+          <Card className="eg-c-social-3" cardIndex={6}>
+            <CardSocialIcon icon={HashNode} href="https://hashnode.com/@elijah-hash" label="Hashnode" />
+          </Card>
+          <Card className="eg-c-social-4" cardIndex={7}>
+            <CardSocialIcon icon={GithubIcon} href="https://github.com/Elijah-hash7" label="GitHub" />
+          </Card>
 
-            <BentoCard style={{ gridColumn: "9 / 13", gridRow: "1 / 2" }}>
-              <BentoItemNowPlaying />
-            </BentoCard>
-
-            {/* ── ROW 2 ── */}
-            <div style={{ gridColumn: "1 / 4", gridRow: "3 / 4", display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: "0.55rem" }}>
-              {socialMedias.map(({ icon: Icon, href }) => (
-                <BentoCard key={href}>
-                  <a href={href} target="_blank" rel="noopener noreferrer"
-                    className="flex size-full items-center justify-center rounded-2xl">
-                    <Icon className="size-7 social-icon" />
-                  </a>
-                </BentoCard>
-              ))}
-            </div>
-
-            <BentoCard style={{ gridColumn: "4 / 9", gridRow: "3 / 4" }}>
-              <BentoItemCTA />
-            </BentoCard>
-
-            <BentoCard style={{ gridColumn: "9 / 13", gridRow: "2 / 4" }}>
-              <BentoItemUptime />
-            </BentoCard>
-
-            {/* ── ROW 3 ── */}
-            <BentoCard style={{ gridColumn: "1 / 7", gridRow: "4 / 6" }}>
-              <BentoItemGithubActivity />
-            </BentoCard>
-
-            <BentoCard style={{ gridColumn: "7 / 13", gridRow: "4 / 6" }}>
-              <BentoItemTechStack />
-            </BentoCard>
-          </div>
+          <Card className="eg-c-cta" cardIndex={8}>       <CardCTA />        </Card>
+          <Card className="eg-c-github" cardIndex={9}>    <CardGithub />     </Card>
+          <Card className="eg-c-tech" cardIndex={10}>     <CardTechStack />  </Card>
         </div>
-      </>
-    );
-  }
+      </div>
+    </>
+  );
+}

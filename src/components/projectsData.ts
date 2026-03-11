@@ -17,7 +17,7 @@ export const PROJECTS_DATA: ProjectData[] = [
     year: '2026',
     status: 'ACTIVE',
     title: 'Pacifica Farcaster Trading Mini-App',
-    description: 'Built a Farcaster-native perpetual trading mini-app for Pacifica with Solana wallet auth, automated limit orders, and secure backend order execution.',
+    description: 'Built a Farcaster-native perpetual trading mini-app using the Pacifica API,featuring Solana wallet authentication, automated limit orders, and secure backend order execution.',
     longDescription: 'Built a Farcaster mini-app that lets users trade Pacifica perpetual markets directly from Warpcast. Implemented wallet authentication, account linking, order execution flows, automated limit-order monitoring, and secure agent-wallet signing for backend trade execution.',
     tags: [
       "Next.js",
@@ -106,6 +106,7 @@ export const PROJECTS_DATA: ProjectData[] = [
     longDescription: 'Supports conditional logic so form questions change based on user input. Also includes OAuth authentication and API endpoints for handling form submissions and data retrieval.',
     tags: ['NODE.JS', 'EXPRESS', 'AIRTABLE API', 'OAUTH'],
     github: 'https://github.com/Elijah-hash7/FormApp',
+    link: 'https://smart-formapp.vercel.app/',
     highlights: [
       'Built dynamic forms with conditional logic',
       'OAuth authentication for secure access',

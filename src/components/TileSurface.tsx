@@ -1,11 +1,10 @@
-"use client";
-
 import { useEffect, useRef } from "react";
 
 export default function TileSurface() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
+    const desktopPointerQuery = window.matchMedia("(hover: hover) and (pointer: fine)");
     const maybeCanvas = canvasRef.current;
     if (!maybeCanvas) return;
     const canvas: HTMLCanvasElement = maybeCanvas;
@@ -28,6 +27,7 @@ export default function TileSurface() {
     let mouse = { x: -9999, y: -9999 };
     let smooth = { x: -9999, y: -9999 };
     let hasMouseEntered = false;
+    let cursorFollowEnabled = desktopPointerQuery.matches;
 
     let time = 0;
     let rafId: number;
@@ -37,7 +37,7 @@ export default function TileSurface() {
     let sweepActive = false;
     let lastSweep = 0;
     const SWEEP_INTERVAL = 7000;
-    const SWEEP_SPEED = 2.9;
+    const SWEEP_SPEED = 1.5;
     const SWEEP_WIDTH = 220;
 
     function build() {
@@ -175,7 +175,16 @@ export default function TileSurface() {
     }
 
     // Listen on WINDOW — not canvas — so pointer-events:none on the wrapper never breaks it
+    const resetPointerState = () => {
+      mouse.x = -9999;
+      mouse.y = -9999;
+      smooth.x = -9999;
+      smooth.y = -9999;
+      hasMouseEntered = false;
+    };
+
     const onMouseMove = (e: MouseEvent) => {
+      if (!cursorFollowEnabled) return;
       if (!hasMouseEntered) {
         // Snap on very first movement so there's zero lerp delay
         smooth.x = e.clientX;
@@ -185,12 +194,21 @@ export default function TileSurface() {
       mouse.x = e.clientX;
       mouse.y = e.clientY;
     };
-    const onMouseLeave = () => { mouse.x = -9999; mouse.y = -9999; };
+    const onMouseLeave = () => {
+      if (!cursorFollowEnabled) return;
+      mouse.x = -9999;
+      mouse.y = -9999;
+    };
     const onResize = () => build();
+    const onPointerCapabilityChange = (event: MediaQueryListEvent) => {
+      cursorFollowEnabled = event.matches;
+      if (!cursorFollowEnabled) resetPointerState();
+    };
 
     window.addEventListener("mousemove", onMouseMove);
     window.addEventListener("mouseleave", onMouseLeave);
     window.addEventListener("resize", onResize);
+    desktopPointerQuery.addEventListener("change", onPointerCapabilityChange);
 
     build();
     // First sweep fires 1.5 s after load — not immediate
@@ -202,6 +220,7 @@ export default function TileSurface() {
       window.removeEventListener("mousemove", onMouseMove);
       window.removeEventListener("mouseleave", onMouseLeave);
       window.removeEventListener("resize", onResize);
+      desktopPointerQuery.removeEventListener("change", onPointerCapabilityChange);
     };
   }, []);
 

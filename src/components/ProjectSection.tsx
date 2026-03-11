@@ -1,17 +1,11 @@
 // src/components/ProjectSection.tsx
-'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { PROJECTS_DATA } from './projectsData';
 
-// ────────────────────────────────────────────────────────────────────────────
-// 👇 PICK WHICH PROJECTS SHOW ON THE HOMEPAGE — change these indices
-//    0 = first project in projectsData, 1 = second, 2 = third, etc.
-//    Example: [0, 2, 3] shows projects 1, 3 and 4 from your data file
-// ────────────────────────────────────────────────────────────────────────────
-const FEATURED_INDICES = [0, 1, 3];
-
+const FEATURED_INDICES = [0, 2, 3];
 const PROJECTS = FEATURED_INDICES.map(i => PROJECTS_DATA[i]).filter(Boolean);
+const COL_COUNT = PROJECTS.length;
 
 // ── Icons ──────────────────────────────────────────────────────────────────
 
@@ -46,13 +40,10 @@ const ChevronDownIcon = ({ size = 10, open }: { size?: number; open: boolean }) 
 type Status = 'ACTIVE' | 'COMPLETED' | 'ARCHIVED';
 
 const STATUS_STYLES: Record<Status, { bg: string; color: string }> = {
-    ACTIVE:    { bg: 'rgba(74,222,128,0.12)',  color: '#4ade80' },
-    COMPLETED: { bg: 'rgba(251,191,36,0.12)',  color: '#fbbf24' },
-    ARCHIVED:  { bg: 'rgba(148,163,184,0.10)', color: '#94a3b8' },
+    ACTIVE: { bg: 'rgba(74,222,128,0.12)', color: '#4ade80' },
+    COMPLETED: { bg: 'rgba(251,191,36,0.12)', color: '#fbbf24' },
+    ARCHIVED: { bg: 'rgba(148,163,184,0.10)', color: '#94a3b8' },
 };
-
-const TITLE_ROW_MIN_HEIGHT = '5.5rem';
-const DESCRIPTION_ROW_MIN_HEIGHT = '8rem';
 
 function StatusBadge({ status }: { status: Status }) {
     const s = STATUS_STYLES[status];
@@ -96,35 +87,32 @@ function Tag({ label }: { label: string }) {
 
 // ── Project card ───────────────────────────────────────────────────────────
 
-function ProjectCard({ project, index, total }: {
+function ProjectCard({ project, index, isVisible }: {
     project: typeof PROJECTS[0];
     index: number;
-    total: number;
+    isVisible: boolean;
 }) {
-    const [hovered,       setHovered]  = useState(false);
-    const [tagsOpen,      setTagsOpen] = useState(false);
+    const [hovered, setHovered] = useState(false);
+    const [tagsOpen, setTagsOpen] = useState(false);
     const [githubHovered, setGHovered] = useState(false);
-    const [linkHovered,   setLHovered] = useState(false);
+    const [linkHovered, setLHovered] = useState(false);
 
     const VISIBLE = 3;
-    const extra   = project.tags.length - VISIBLE;
+    const extra = project.tags.length - VISIBLE;
 
     return (
         <div
+            className={`ps-card${isVisible ? ' is-revealed' : ''}`}
             onMouseEnter={() => setHovered(true)}
             onMouseLeave={() => setHovered(false)}
             style={{
                 position: 'relative',
-                display: 'grid',
-                gridTemplateRows: `auto minmax(${TITLE_ROW_MIN_HEIGHT}, auto) minmax(${DESCRIPTION_ROW_MIN_HEIGHT}, auto) auto auto`,
-                borderLeft: '1px solid rgba(255,255,255,0.08)',
-                borderRight: index === total - 1 ? '1px solid rgba(255,255,255,0.08)' : 'none',
-                padding: '2rem 2.2rem',
+                display: 'flex',
+                flexDirection: 'column',
                 background: hovered ? 'rgba(255,255,255,0.025)' : 'rgba(5,7,12,0.55)',
                 backdropFilter: 'blur(12px)',
-                transition: 'background 0.3s ease',
+                transitionDelay: `${index * 120}ms`,
                 cursor: 'default',
-                minHeight: 420,
             }}
         >
             {/* Top accent line */}
@@ -135,7 +123,10 @@ function ProjectCard({ project, index, total }: {
             }} />
 
             {/* YEAR + STATUS */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.6rem' }}>
+            <div className="ps-meta" style={{
+                display: 'flex', justifyContent: 'space-between',
+                alignItems: 'center',
+            }}>
                 <div>
                     <p style={{
                         fontFamily: "'Geist Mono', 'Courier New', monospace",
@@ -152,35 +143,34 @@ function ProjectCard({ project, index, total }: {
             </div>
 
             {/* TITLE */}
-            <h2 style={{
+            <h2 className="ps-title" style={{
                 fontFamily: "'Bebas Neue', 'Impact', sans-serif",
-                fontSize: 'clamp(1.6rem, 2.5vw, 2.1rem)',
                 lineHeight: 1.05, letterSpacing: '0.02em',
                 color: hovered ? '#ffffff' : 'rgba(255,255,255,0.88)',
-                marginBottom: '1.2rem',
                 transition: 'color 0.3s ease',
-                minHeight: TITLE_ROW_MIN_HEIGHT,
+                margin: 0,
             }}>
                 {project.title}
             </h2>
 
             {/* LEFT ACCENT + DESCRIPTION */}
-            <div style={{ display: 'flex', gap: '1rem', minHeight: DESCRIPTION_ROW_MIN_HEIGHT }}>
+            <div style={{ display: 'flex', gap: '1rem', flex: 1 }}>
                 <div style={{
                     width: 2, background: 'rgba(255,255,255,0.12)',
-                    borderRadius: 1, flexShrink: 0, alignSelf: 'stretch',
+                    borderRadius: 1, flexShrink: 0,
                 }} />
-                <p style={{
+                <p className="ps-desc" style={{
                     fontFamily: "'Geist Mono', 'Courier New', monospace",
-                    fontSize: '0.78rem', lineHeight: 1.75,
+                    lineHeight: 1.75,
                     color: 'rgba(255,255,255,0.45)', fontStyle: 'italic',
+                    margin: 0,
                 }}>
                     {project.description}
                 </p>
             </div>
 
             {/* STACK */}
-            <div style={{ marginTop: '2rem', position: 'relative', zIndex: 2, alignSelf: 'start' }}>
+            <div style={{ position: 'relative', zIndex: 2 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.6rem' }}>
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.25)" strokeWidth="1.5">
                         <rect x="7" y="7" width="10" height="10" rx="1" />
@@ -198,7 +188,6 @@ function ProjectCard({ project, index, total }: {
                         <Tag key={tag} label={tag} />
                     ))}
 
-                    {/* +N expandable — CLICKABLE */}
                     {extra > 0 && !tagsOpen && (
                         <button
                             onClick={e => { e.stopPropagation(); setTagsOpen(true); }}
@@ -225,7 +214,6 @@ function ProjectCard({ project, index, total }: {
                         </button>
                     )}
 
-                    {/* Collapse */}
                     {tagsOpen && (
                         <button
                             onClick={e => { e.stopPropagation(); setTagsOpen(false); }}
@@ -245,9 +233,8 @@ function ProjectCard({ project, index, total }: {
                 </div>
             </div>
 
-            {/* FOOTER — github + open resource */}
-            <div style={{
-                marginTop: '2rem', paddingTop: '1.2rem',
+            {/* FOOTER */}
+            <div className="ps-footer" style={{
                 borderTop: '1px solid rgba(255,255,255,0.07)',
                 display: 'flex', alignItems: 'center',
                 justifyContent: 'space-between', gap: '1rem',
@@ -264,7 +251,7 @@ function ProjectCard({ project, index, total }: {
                             display: 'inline-flex', alignItems: 'center', gap: '0.45rem',
                             fontFamily: "'Geist Mono', 'Courier New', monospace",
                             fontSize: '0.6rem', letterSpacing: '0.14em',
-                            color: githubHovered ? 'rgba(255, 255, 255, 0.93)' : 'rgba(255, 255, 255, 0.78)',
+                            color: githubHovered ? 'rgba(255,255,255,0.93)' : 'rgba(255,255,255,0.55)',
                             textDecoration: 'none', transition: 'color 0.25s ease',
                             textTransform: 'uppercase',
                         }}
@@ -284,7 +271,7 @@ function ProjectCard({ project, index, total }: {
                             display: 'flex', alignItems: 'center', gap: '0.5rem',
                             fontFamily: "'Geist Mono', 'Courier New', monospace",
                             fontSize: '0.65rem', letterSpacing: '0.18em',
-                            color: linkHovered ? 'rgba(255,255,255,0.8)' : 'rgba(255, 255, 255, 0.78)',
+                            color: linkHovered ? '#ffffff' : 'rgba(255,255,255,0.55)',
                             textDecoration: 'none', transition: 'color 0.3s ease',
                             textTransform: 'uppercase',
                         }}
@@ -295,7 +282,7 @@ function ProjectCard({ project, index, total }: {
                     <span style={{
                         fontFamily: "'Geist Mono', 'Courier New', monospace",
                         fontSize: '0.6rem', letterSpacing: '0.14em',
-                        color: 'rgba(255, 255, 255, 0.78)', textTransform: 'uppercase',
+                        color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase',
                     }}>
                         No_Live_Demo
                     </span>
@@ -308,75 +295,244 @@ function ProjectCard({ project, index, total }: {
 // ── Main export ────────────────────────────────────────────────────────────
 
 export default function ProjectSection() {
+    const sectionRef = useRef<HTMLElement>(null);
+    const [isVisible, setIsVisible] = useState(false);
+
+    useEffect(() => {
+        const section = sectionRef.current;
+        if (!section) return;
+
+        const observer = new IntersectionObserver(
+            (entries) => {
+                const entry = entries[0];
+                setIsVisible(Boolean(entry?.isIntersecting));
+            },
+            {
+                threshold: 0.16,
+                rootMargin: '0px 0px -14% 0px',
+            },
+        );
+
+        observer.observe(section);
+        return () => observer.disconnect();
+    }, []);
+
     return (
         <>
             <style>{`
                 @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Geist+Mono:wght@400;500&display=swap');
+
                 @keyframes ps-pulse {
                     0%, 100% { opacity: 1; }
                     50%       { opacity: 0.4; }
                 }
+
+                /* ─── SECTION ─────────────────────────────── */
+                .ps-section {
+                    width: 100%;
+                    padding: 4rem var(--page-gutter, 1.5rem);
+                    position: relative;
+                }
+
+                /* ─── HEADER ──────────────────────────────── */
+                .ps-header {
+                    display: flex;
+                    align-items: center;
+                    gap: 1.5rem;
+                    margin-bottom: 2rem;
+                    flex-wrap: nowrap;
+                    width: 100%;
+                }
+                .ps-header-title {
+                    font-family: 'Bebas Neue', sans-serif;
+                    font-size: clamp(2rem, 5vw, 3.5rem);
+                    letter-spacing: 0.06em;
+                    color: rgba(255,255,255,0.9);
+                    line-height: 1;
+                    white-space: nowrap;
+                    flex-shrink: 0;
+                    opacity: 0;
+                    transform: translateX(-40px);
+                    transition:
+                        opacity 600ms cubic-bezier(0.22, 1, 0.36, 1),
+                        transform 600ms cubic-bezier(0.22, 1, 0.36, 1);
+                }
+                .ps-header-title.is-revealed {
+                    opacity: 1;
+                    transform: translateX(0);
+                }
+                .ps-header-rule {
+                    flex: 1;
+                    height: 1px;
+                    background: rgba(255,255,255,0.07);
+                    min-width: 0;
+                }
+                .ps-header-cta {
+                    font-family: 'Geist Mono', 'Courier New', monospace;
+                    font-size: 0.62rem;
+                    letter-spacing: 0.14em;
+                    color: rgba(255,255,255,0.78);
+                    text-decoration: none;
+                    border: 1px solid rgba(255,255,255,0.2);
+                    border-radius: 999px;
+                    padding: 0.48rem 0.9rem;
+                    line-height: 1;
+                    white-space: nowrap;
+                    background: rgba(255,255,255,0.03);
+                    flex-shrink: 0;
+                    margin-left: auto;
+                    transition: border-color 0.2s, color 0.2s;
+                }
+                .ps-header-cta:hover {
+                    border-color: rgba(255,255,255,0.4);
+                    color: rgba(255,255,255,1);
+                }
+
+                /* ─── GRID ────────────────────────────────── */
+                /* CRITICAL: grid-template-columns is here in CSS,
+                   NOT inline — so media queries can override it  */
+                .ps-grid {
+                    display: grid;
+                    grid-template-columns: repeat(${COL_COUNT}, 1fr);
+                    border-top: 1px solid rgba(255,255,255,0.08);
+                    border-bottom: 1px solid rgba(255,255,255,0.08);
+                    border-radius: 8px;
+                    overflow: hidden;
+                }
+
+                /* ─── CARD ────────────────────────────────── */
+                .ps-card {
+                    min-height: 420px;
+                    padding: 2rem 2.2rem;
+                    border-left: 1px solid rgba(255,255,255,0.08);
+                    gap: 0;
+                    opacity: 0;
+                    transform: translateY(60px) scale(0.96);
+                    filter: blur(6px);
+                    transition:
+                        opacity 700ms cubic-bezier(0.22, 1, 0.36, 1),
+                        transform 700ms cubic-bezier(0.22, 1, 0.36, 1),
+                        filter 700ms cubic-bezier(0.22, 1, 0.36, 1),
+                        background 200ms ease,
+                        box-shadow 200ms ease;
+                }
+                .ps-card.is-revealed {
+                    opacity: 1;
+                    transform: translateY(0) scale(1);
+                    filter: blur(0);
+                }
+                .ps-card:last-child {
+                    border-right: 1px solid rgba(255,255,255,0.08);
+                }
+                .ps-card:hover {
+                    transform: translateY(-6px) scale(1.01);
+                }
+                .ps-meta  { margin-bottom: 1.6rem; }
+                .ps-title { font-size: clamp(1.6rem, 2.5vw, 2.1rem); margin-bottom: 1.2rem; }
+                .ps-desc  { font-size: 0.78rem; }
+                .ps-footer { margin-top: 2rem; padding-top: 1.2rem; }
+
+                /* ─── Stack section spacing ───────────────── */
+                .ps-card > div:nth-child(4) { margin-top: 2rem; }
+
+                /* ─── TABLET (768px – 1023px) ─────────────── */
+                @media (max-width: 1023px) {
+                    .ps-grid {
+                        grid-template-columns: repeat(2, 1fr);
+                        border-radius: 12px;
+                    }
+                    /* If odd number of cards, last one spans full width */
+                    .ps-card:last-child:nth-child(odd) {
+                        grid-column: 1 / -1;
+                        border-right: 1px solid rgba(255,255,255,0.08);
+                    }
+                    .ps-card { min-height: 360px; }
+                    .ps-title { font-size: clamp(1.4rem, 3vw, 1.9rem); }
+                }
+
+                /* ─── MOBILE (< 768px) ────────────────────── */
+                @media (max-width: 767px) {
+                    .ps-section { padding: 2.5rem 1rem; }
+
+                    .ps-header { gap: 0.75rem; margin-bottom: 1.5rem; }
+                    .ps-header-rule { display: none; }
+                    .ps-header-title { font-size: clamp(1.8rem, 8vw, 2.5rem); }
+                    .ps-header-cta {
+                        font-size: 0.5rem;
+                        padding: 0.34rem 0.62rem;
+                        letter-spacing: 0.12em;
+                        margin-left: auto;
+                    }
+
+                    .ps-grid {
+                        grid-template-columns: 1fr;
+                        border-radius: 12px;
+                    }
+                    .ps-card {
+                        min-height: unset;
+                        padding: 1.5rem 1.25rem;
+                        border-left: 1px solid rgba(255,255,255,0.08);
+                        border-right: 1px solid rgba(255,255,255,0.08);
+                        border-bottom: 1px solid rgba(255,255,255,0.06);
+                    }
+                    /* Remove double border between stacked cards */
+                    .ps-card:not(:last-child) { border-bottom: none; }
+
+                    .ps-title { font-size: clamp(1.5rem, 7vw, 2rem); margin-bottom: 1rem; }
+                    .ps-desc  { font-size: 0.75rem; }
+                    .ps-meta  { margin-bottom: 1.2rem; }
+                    .ps-footer { flex-direction: row; }
+                }
+
+                /* ─── SMALL MOBILE (< 480px) ──────────────── */
+                @media (max-width: 479px) {
+                    .ps-section { padding: 2rem 0.75rem; }
+                    .ps-card    { padding: 1.25rem 1rem; }
+                    .ps-title   { font-size: clamp(1.3rem, 8vw, 1.8rem); }
+                    .ps-desc    { font-size: 0.72rem; }
+                    .ps-header-title { font-size: clamp(1.5rem, 9vw, 2rem); }
+                }
+
+                @media (prefers-reduced-motion: reduce) {
+                    .ps-card,
+                    .ps-header-title {
+                        opacity: 1 !important;
+                        transform: none !important;
+                        filter: none !important;
+                        transition: none !important;
+                    }
+                }
             `}</style>
 
-            <section
-                id="projects"
-                style={{
-                    width: '100%',
-                    margin: '0 auto',
-                    padding: '4rem var(--page-gutter)',
-                    position: 'relative',
-                }}
-            >
-                {/* Section header */}
-                <div style={{
-                    marginBottom: '2rem',
-                    display: 'flex',
-                    alignItems: 'baseline',
-                    gap: '1.5rem',
-                }}>
-                    <h2 style={{
-                        fontFamily: "'Bebas Neue', sans-serif",
-                        fontSize: 'clamp(2rem, 5vw, 3.5rem)',
-                        letterSpacing: '0.06em',
-                        color: 'rgba(255,255,255,0.9)',
-                        lineHeight: 1,
-                    }}>
+            <section id="projects" className="ps-section" ref={sectionRef}>
+
+                {/* Header */}
+                <div className="ps-header">
+                    <h2 className={`ps-header-title${isVisible ? ' is-revealed' : ''}`}>
                         PROJECT_LOG
                     </h2>
-                    <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.07)' }} />
+                    <div className="ps-header-rule" />
                     <a
                         href="/projects"
-                        className="nav-link"
+                        className="nav-link ps-header-cta"
                         data-nav
-                        style={{
-                            fontFamily: "'Geist Mono', 'Courier New', monospace",
-                            fontSize: '0.62rem', letterSpacing: '0.14em',
-                            color: 'rgba(255,255,255,0.78)',
-                            textDecoration: 'none',
-                            border: '1px solid rgba(255,255,255,0.2)',
-                            borderRadius: 999,
-                            padding: '0.48rem 0.9rem',
-                            lineHeight: 1, whiteSpace: 'nowrap',
-                            background: 'rgba(255,255,255,0.03)',
-                        }}
                     >
                         VIEW ALL PROJECTS
                     </a>
                 </div>
 
-                {/* Cards grid */}
-                <div style={{
-                    display: 'grid',
-                    gridTemplateColumns: `repeat(${PROJECTS.length}, 1fr)`,
-                    borderTop: '1px solid rgba(255,255,255,0.08)',
-                    borderBottom: '1px solid rgba(255,255,255,0.08)',
-                    borderRadius: 8,
-                    overflow: 'hidden',
-                }}>
+                {/* Cards */}
+                <div className="ps-grid">
                     {PROJECTS.map((project, i) => (
-                        <ProjectCard key={project.id} project={project} index={i} total={PROJECTS.length} />
+                        <ProjectCard
+                            key={project.id}
+                            project={project}
+                            index={i}
+                            isVisible={isVisible}
+                        />
                     ))}
                 </div>
+
             </section>
         </>
     );

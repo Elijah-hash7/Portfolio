@@ -1,58 +1,16 @@
 ---
-import "@/styles/global.css";
+import BaseLayout from "@/layouts/BaseLayout.astro";
 import Hero from "@/components/Hero.astro";
 import BentoGrid from "@/components/BentoGrid";
-import TileSurface from "@/components/TileSurface";
 import ProjectSection from "@/components/ProjectSection";
 import BlogSection from "@/components/BlogSection";
-import Footer from "@/components/Footer"
+import Footer from "@/components/Footer";
 ---
 
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Elijah Emmanuel — Backend Engineer</title>
-    <meta name="theme-color" content="#05070c" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Cormorant+Garamond:wght@600;700&family=Geist+Mono:wght@400;500&family=JetBrains+Mono:wght@400;500&family=Space+Mono:wght@400;700&display=swap"
-      rel="stylesheet"
-    />
-    <style is:inline>
-      html {
-        background: #05070c;
-        color: #f8fafc;
-      }
-
-      body {
-        margin: 0;
-        min-height: 100vh;
-        background:
-          radial-gradient(circle at top, rgba(163, 230, 53, 0.06), transparent 38%),
-          #05070c;
-        color: #f8fafc;
-      }
-    </style>
-  </head>
-  <body class="relative text-slate-100 antialiased">
-    <!-- Tile background — fixed, behind everything -->
-    <div
-      style="position: fixed; inset: 0; width: 100%; height: 100%; z-index: 0;"
-    >
-      <TileSurface client:only="react" />
-    </div>
-
-    
-    <div class="relative" style="z-index: 1;">
-      <Hero />
-      <BentoGrid client:load />
-      <ProjectSection />
-      <BlogSection />
-      <Footer />
-    </div>
-
-  </body>
-</html>
+<BaseLayout title="Elijah Emmanuel — Backend Developer">
+  <Hero />
+  <BentoGrid client:load />
+  <ProjectSection client:load />
+  <BlogSection client:load />
+  <Footer />
+</BaseLayout>

@@ -1,19 +1,27 @@
 ---
-import '@/styles/global.css'
-import TileSurface from '@/components/TileSurface';
+import "@/styles/global.css";
+import { ViewTransitions } from "astro:transitions";
+import TileSurface from "@/components/TileSurface";
 const { title = "Emmanuel Elijah" } = Astro.props;
-
 ---
 
 <!doctype html>
-<html lang="en">
+<html lang="en" class="fonts-loading">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{title}</title>
     <meta name="theme-color" content="#05070c" />
+    <ViewTransitions />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="preload"
+      href="https://fonts.gstatic.com/s/cormorantgaramond/v21/co3bmX5slCNuHLi8bLeY9MK7whWMhyjYqXtK.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
     <link
       href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Cormorant+Garamond:wght@600;700&family=Geist+Mono:wght@400;500&family=JetBrains+Mono:wght@400;500&family=Space+Mono:wght@400;700&display=swap"
       rel="stylesheet"
@@ -24,53 +32,766 @@ const { title = "Emmanuel Elijah" } = Astro.props;
         color: #f8fafc;
       }
 
+      html.fonts-loading body,
+      html.fonts-ready body {
+        opacity: 1;
+      }
+
+      .page-shell {
+        position: relative;
+        z-index: 1;
+        transition: opacity 240ms ease;
+      }
+
+      .page-shell > *,
+      [data-page-transition-scope] {
+        transition: opacity 240ms ease;
+      }
+
       body {
         margin: 0;
         min-height: 100vh;
         background:
-          radial-gradient(circle at top, rgba(163, 230, 53, 0.06), transparent 38%),
+          radial-gradient(
+            circle at top,
+            rgba(163, 230, 53, 0.06),
+            transparent 38%
+          ),
           #05070c;
         color: #f8fafc;
       }
     </style>
+    <script is:inline>
+      (function () {
+        var root = document.documentElement;
+        var skipGate = false;
+        var fontsWarmed = false;
+        try {
+          skipGate = window.sessionStorage.getItem("skip-font-gate") === "1";
+          fontsWarmed = window.sessionStorage.getItem("fonts-warmed") === "1";
+          if (skipGate) {
+            window.sessionStorage.removeItem("skip-font-gate");
+          }
+        } catch (error) {}
+
+        if (skipGate || fontsWarmed) {
+          root.classList.remove("fonts-loading");
+          root.classList.add("fonts-ready");
+          // Ensure fonts-warmed persists for better caching
+          try {
+            window.sessionStorage.setItem("fonts-warmed", "1");
+          } catch (error) {}
+          return;
+        }
+
+        var resolved = false;
+        var fallbackTimer = window.setTimeout(function () {
+          if (resolved) return;
+          resolved = true;
+          root.classList.remove("fonts-loading");
+          root.classList.add("fonts-ready");
+        }, 3000);
+
+        if (!root.classList.contains("fonts-loading")) {
+          root.classList.add("fonts-loading");
+        }
+
+        if (document.fonts && document.fonts.ready) {
+          document.fonts.ready.then(function () {
+            if (resolved) return;
+            resolved = true;
+            window.clearTimeout(fallbackTimer);
+            try {
+              window.sessionStorage.setItem("fonts-warmed", "1");
+            } catch (error) {}
+            root.classList.remove("fonts-loading");
+            root.classList.add("fonts-ready");
+          });
+        } else {
+          if (document.readyState === "loading") {
+            document.addEventListener(
+              "DOMContentLoaded",
+              function () {
+                if (resolved) return;
+                resolved = true;
+                window.clearTimeout(fallbackTimer);
+                try {
+                  window.sessionStorage.setItem("fonts-warmed", "1");
+                } catch (error) {}
+                root.classList.remove("fonts-loading");
+                root.classList.add("fonts-ready");
+              },
+              { once: true },
+            );
+          } else {
+            if (resolved) return;
+            resolved = true;
+            window.clearTimeout(fallbackTimer);
+            try {
+              window.sessionStorage.setItem("fonts-warmed", "1");
+            } catch (error) {}
+            root.classList.remove("fonts-loading");
+            root.classList.add("fonts-ready");
+          }
+        }
+      })();
+    </script>
   </head>
 
   <body class="relative bg-[#05070c] text-white antialiased">
+    <div class="top-indicator" aria-hidden="true">
+      <div class="top-indicator__track"></div>
+      <div class="top-indicator__scroll"></div>
+      <div class="route-loader">
+        <div class="route-loader__bar"></div>
+      </div>
+    </div>
+
     <div
       style="position: fixed; inset: 0; width: 100%; height: 100%; z-index: 0;"
     >
       <TileSurface client:only="react" />
     </div>
 
-    <div class="relative" style="z-index: 1;">
+    <div class="page-shell">
       <slot />
     </div>
 
-    <!-- Loading overlay for /projects and /articles navigation -->
-    <div id="nav-loading" class="nav-loading" aria-hidden="true">
-      <div class="nav-loading__bar"></div>
-    </div>
-    <script is:inline>
-      document.addEventListener('DOMContentLoaded', function() {
-        var overlay = document.getElementById('nav-loading');
-        var DURATION = 2200;
-        document.addEventListener('click', function(e) {
-          var a = e.target.closest('a[href="/projects"], a[href="/articles"]');
-          if (!a || a.target === '_blank') return;
-          e.preventDefault();
-          if (overlay) {
-            overlay.classList.add('nav-loading--active');
-            overlay.setAttribute('aria-hidden', 'false');
-          }
-          setTimeout(function() { window.location.href = a.getAttribute('href'); }, DURATION);
-        }, true);
-      });
-    </script>
-    <style is:inline>
-      .nav-loading{position:fixed;inset:0;z-index:9999;background:rgba(5,7,12,0.85);opacity:0;visibility:hidden;pointer-events:none;transition:opacity .25s,visibility .25s}
-      .nav-loading--active{opacity:1;visibility:visible;pointer-events:auto}
-      .nav-loading__bar{position:absolute;top:0;left:0;height:3px;background:#c8f55a;width:0;animation:nav-load-fill 2.2s ease-out forwards}
-      @keyframes nav-load-fill{to{width:100%}}
+    <style is:global>
+      [data-animate],
+      [data-stagger-item] {
+        opacity: 0;
+        filter: blur(8px);
+        will-change: transform, opacity, filter;
+        transition:
+          opacity 0.75s cubic-bezier(0.16, 1, 0.3, 1),
+          transform 0.75s cubic-bezier(0.16, 1, 0.3, 1),
+          filter 0.75s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+
+      [data-animate].in-view,
+      [data-stagger-item].in-view {
+        opacity: 1 !important;
+        transform: none !important;
+        filter: blur(0) !important;
+      }
+
+      [data-animate="up"],
+      [data-stagger-item] {
+        transform: translateY(42px);
+      }
+      [data-animate="fade"] {
+        transform: translateY(18px) scale(0.985);
+        filter: blur(6px);
+      }
+      [data-animate="scale"] {
+        transform: scale(0.94) translateY(14px);
+        filter: blur(6px);
+      }
+      [data-animate="fade-down"] {
+        transform: translateY(-22px);
+        filter: blur(6px);
+      }
+      [data-animate="left"] {
+        transform: translateX(-28px);
+        filter: blur(6px);
+      }
+      [data-animate="right"] {
+        transform: translateX(28px);
+        filter: blur(6px);
+      }
+
+      #projects [data-animate="fade"],
+      #article [data-animate="fade"],
+      .ft[data-animate="fade"] {
+        transform: translateY(26px) scale(0.982);
+        filter: blur(8px);
+      }
+
+      [data-delay="1"] {
+        transition-delay: 80ms;
+      }
+      [data-delay="2"] {
+        transition-delay: 160ms;
+      }
+      [data-delay="3"] {
+        transition-delay: 240ms;
+      }
+      [data-delay="4"] {
+        transition-delay: 320ms;
+      }
+      [data-delay="5"] {
+        transition-delay: 400ms;
+      }
+      [data-delay="6"] {
+        transition-delay: 480ms;
+      }
+      [data-delay="7"] {
+        transition-delay: 560ms;
+      }
+      [data-delay="8"] {
+        transition-delay: 640ms;
+      }
+
+      #hero [data-animate],
+      #hero [data-stagger-item] {
+        opacity: unset !important;
+        transform: unset !important;
+        filter: unset !important;
+        transition: unset !important;
+        transition-delay: unset !important;
+      }
+
+      .top-indicator {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 3px;
+        z-index: 99999;
+        pointer-events: none;
+      }
+
+      .top-indicator__track,
+      .top-indicator__scroll,
+      .route-loader {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        transform-origin: left center;
+      }
+
+      .top-indicator__track {
+        background: rgba(200, 245, 90, 0.12);
+        opacity: 0.3;
+      }
+
+      .top-indicator__scroll {
+        transform: scaleX(0);
+        background: linear-gradient(
+          90deg,
+          var(--accent),
+          #a3e635 72%,
+          rgba(200, 245, 90, 0.92)
+        );
+        box-shadow: 0 0 10px var(--accent-glow);
+        will-change: transform;
+        transition:
+          transform 140ms ease-out,
+          opacity 160ms ease-out;
+      }
+
+      .route-loader {
+        opacity: 0;
+        transition: opacity 200ms ease;
+      }
+
+      .route-loader__bar {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        opacity: 1;
+        transform: scaleX(0);
+        transform-origin: left center;
+        background:
+          linear-gradient(
+            90deg,
+            rgba(255, 255, 255, 0.16),
+            rgba(255, 255, 255, 0) 14%
+          ),
+          linear-gradient(90deg, #d9ff7a 0%, var(--accent) 48%, #8fd11d 100%);
+        box-shadow:
+          0 0 0 1px rgba(200, 245, 90, 0.1),
+          0 0 14px rgba(200, 245, 90, 0.45),
+          0 0 28px rgba(163, 230, 53, 0.2);
+        will-change: transform, opacity;
+      }
+
+      .route-loader__bar::after {
+        content: "";
+        position: absolute;
+        inset: 0 auto 0 0;
+        width: 24%;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          rgba(255, 255, 255, 0.75),
+          transparent
+        );
+        opacity: 0;
+        transform: translateX(-140%);
+      }
+
+      .route-loader.is-active {
+        opacity: 1;
+      }
+
+      .route-loader.is-active:not(.is-completing) .route-loader__bar {
+        transform: scaleX(0.88);
+        transition: transform 1.25s ease-in-out;
+      }
+
+      .route-loader.is-active:not(.is-completing) .route-loader__bar::after {
+        opacity: 1;
+        animation: route-loader-scan 620ms linear infinite;
+      }
+
+      .route-loader.is-completing .route-loader__bar {
+        transform: scaleX(1);
+        opacity: 0;
+        transition:
+          transform 180ms ease-out,
+          opacity 200ms ease-out;
+      }
+
+      .page-shell.is-route-loading {
+        opacity: 1;
+        pointer-events: none;
+      }
+
+      .page-shell.is-route-loading::after {
+        content: "";
+        position: fixed;
+        inset: 0;
+        z-index: 9998;
+        pointer-events: none;
+        background: rgba(5, 7, 12, 0.18);
+        backdrop-filter: blur(4px);
+        -webkit-backdrop-filter: blur(4px);
+      }
+
+      .page-shell.is-route-loading .top-indicator {
+        filter: none;
+        opacity: 1;
+      }
+
+      @keyframes route-loader-scan {
+        from {
+          transform: translateX(-140%);
+        }
+        to {
+          transform: translateX(520%);
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        [data-animate],
+        [data-stagger-item] {
+          opacity: 1 !important;
+          transform: none !important;
+          filter: none !important;
+          transition: none !important;
+        }
+
+        .page-shell,
+        .page-shell > *,
+        [data-page-transition-scope],
+        .page-shell.is-route-loading::after,
+        .top-indicator__scroll,
+        .route-loader,
+        .route-loader__bar {
+          transition: none !important;
+        }
+      }
     </style>
+
+    <script is:inline>
+      (function () {
+        var revealObserver;
+
+        function getRevealObserver() {
+          if (revealObserver) return revealObserver;
+
+          revealObserver = new IntersectionObserver(
+            function (entries) {
+              entries.forEach(function (entry) {
+                if (entry.isIntersecting) {
+                  entry.target.classList.add("in-view");
+                } else {
+                  entry.target.classList.remove("in-view");
+                }
+              });
+            },
+            {
+              threshold: 0.12,
+              rootMargin: "0px 0px -12% 0px",
+            },
+          );
+
+          return revealObserver;
+        }
+
+        function initAnimations(root) {
+          var observer = getRevealObserver();
+          var scope = root || document;
+          var all = scope.querySelectorAll(
+            "[data-animate], [data-stagger-item]",
+          );
+          all.forEach(function (el) {
+            if (!el.closest("#hero")) {
+              var rect = el.getBoundingClientRect();
+              var viewportHeight =
+                window.innerHeight || document.documentElement.clientHeight;
+              if (rect.top < viewportHeight - 24 && rect.bottom > 0) {
+                el.classList.add("in-view");
+              }
+              observer.observe(el);
+            }
+          });
+        }
+
+        window.__initPortfolioAnimations = initAnimations;
+
+        if (document.readyState === "loading") {
+          document.addEventListener("DOMContentLoaded", function () {
+            initAnimations();
+          });
+        } else {
+          initAnimations();
+        }
+        document.addEventListener("astro:page-load", function () {
+          initAnimations();
+        });
+      })();
+    </script>
+
+    <script is:inline>
+      (function () {
+        if (window.__portfolioRouteEnhancer) {
+          window.__portfolioRouteEnhancer.refresh();
+          return;
+        }
+
+        var routeLoader = null;
+        var routeLoaderBar = null;
+        var scrollBar = null;
+        var pageShell = null;
+        var activeRunId = 0;
+        var isRouteLoading = false;
+        var loadingStartedAt = 0;
+        var finishTimer = 0;
+        var cleanupTimer = 0;
+        var safetyTimer = 0;
+        var MIN_VISIBLE_MS = 800;
+        var SAFETY_RESET_MS = 2500;
+
+        function refresh() {
+          routeLoader = document.querySelector(".route-loader");
+          routeLoaderBar = routeLoader
+            ? routeLoader.querySelector(".route-loader__bar")
+            : null;
+          scrollBar = document.querySelector(".top-indicator__scroll");
+          pageShell = document.querySelector(".page-shell");
+
+          syncRouteLoadingState();
+        }
+
+        function syncRouteLoadingState() {
+          if (pageShell) {
+            pageShell.classList.toggle("is-route-loading", isRouteLoading);
+          }
+
+          if (!routeLoader || !routeLoaderBar) return;
+
+          if (!isRouteLoading) {
+            routeLoader.classList.remove("is-active", "is-completing");
+            return;
+          }
+
+          routeLoader.classList.add("is-active");
+        }
+
+        function updateScrollProgress() {
+          refresh();
+          if (!scrollBar) return;
+
+          var scrollTop = window.scrollY || window.pageYOffset || 0;
+          var doc = document.documentElement;
+          var body = document.body;
+          var scrollHeight = Math.max(
+            body ? body.scrollHeight : 0,
+            doc ? doc.scrollHeight : 0,
+            body ? body.offsetHeight : 0,
+            doc ? doc.offsetHeight : 0,
+          );
+          var viewportHeight = window.innerHeight || doc.clientHeight || 0;
+          var maxScroll = Math.max(scrollHeight - viewportHeight, 0);
+          var progress =
+            maxScroll > 0 ? Math.min(Math.max(scrollTop / maxScroll, 0), 1) : 0;
+
+          scrollBar.style.transform = "scaleX(" + progress + ")";
+          scrollBar.style.opacity = maxScroll > 0 ? "1" : "0";
+        }
+
+        function clearTimers() {
+          window.clearTimeout(finishTimer);
+          window.clearTimeout(cleanupTimer);
+          window.clearTimeout(safetyTimer);
+        }
+
+        function waitForAnimationFrame() {
+          return new Promise(function (resolve) {
+            window.requestAnimationFrame(function () {
+              resolve();
+            });
+          });
+        }
+
+        function waitForFontsReady() {
+          if (!document.fonts) {
+            return Promise.resolve();
+          }
+
+          var fontChecks = [
+            document.fonts.ready,
+            document.fonts.load('600 1rem "Cormorant Garamond"'),
+            document.fonts.load('700 1rem "Bebas Neue"'),
+            document.fonts.load('500 1rem "Geist Mono"'),
+            document.fonts.load('500 1rem "JetBrains Mono"'),
+            document.fonts.load('700 1rem "Space Mono"'),
+          ];
+
+          return Promise.allSettled(fontChecks).then(function () {});
+        }
+
+        function waitForPageReady() {
+          return Promise.all([waitForFontsReady(), waitForAnimationFrame()])
+            .then(function () {
+              return waitForAnimationFrame();
+            });
+        }
+
+        function setPageLoadingState(isLoading) {
+          isRouteLoading = isLoading;
+          refresh();
+          syncRouteLoadingState();
+        }
+
+        function resetLoader() {
+          refresh();
+          if (!routeLoader || !routeLoaderBar) return;
+
+          routeLoader.classList.remove("is-active", "is-completing");
+          routeLoaderBar.style.transition = "";
+          routeLoaderBar.style.transform = "";
+          routeLoaderBar.style.opacity = "";
+        }
+
+        function routeKey(pathname, search) {
+          return "scroll_" + pathname + (search || "");
+        }
+
+        function saveScrollPosition() {
+          try {
+            window.sessionStorage.setItem(
+              routeKey(window.location.pathname, window.location.search),
+              String(window.scrollY || window.pageYOffset || 0),
+            );
+          } catch (error) {}
+        }
+
+        function restoreScrollPosition() {
+          try {
+            var key = routeKey(
+              window.location.pathname,
+              window.location.search,
+            );
+            var saved = window.sessionStorage.getItem(key);
+            if (saved === null) return;
+
+            window.sessionStorage.removeItem(key);
+            var y = Number(saved);
+            if (!Number.isFinite(y)) return;
+
+            // Restore immediately without animation frame to prevent jump
+            window.scrollTo({ top: y, left: 0, behavior: "auto" });
+            updateScrollProgress();
+          } catch (error) {}
+        }
+
+        function startLoader() {
+          refresh();
+          if (!routeLoader || !routeLoaderBar) return;
+
+          if (
+            routeLoader.classList.contains("is-active") &&
+            !routeLoader.classList.contains("is-completing")
+          ) {
+            return;
+          }
+
+          activeRunId += 1;
+          loadingStartedAt = performance.now();
+          clearTimers();
+
+          routeLoader.classList.remove("is-active", "is-completing");
+          routeLoaderBar.style.transition = "none";
+          routeLoaderBar.style.transform = "scaleX(0)";
+          routeLoaderBar.getBoundingClientRect();
+
+          routeLoaderBar.style.transition = "";
+          routeLoaderBar.style.transform = "";
+          routeLoader.classList.add("is-active");
+          isRouteLoading = true;
+          if (pageShell) {
+            pageShell.classList.add("is-route-loading");
+          }
+
+          safetyTimer = window.setTimeout(function () {
+            completeLoader(activeRunId);
+          }, SAFETY_RESET_MS);
+        }
+
+        function completeLoader(runId) {
+          if (runId !== activeRunId) return;
+
+          refresh();
+          if (!routeLoader) return;
+
+          var elapsed = performance.now() - loadingStartedAt;
+          var remaining = Math.max(0, MIN_VISIBLE_MS - elapsed);
+
+          window.clearTimeout(finishTimer);
+          finishTimer = window.setTimeout(function () {
+            refresh();
+            if (!routeLoader) return;
+            routeLoader.classList.add("is-completing");
+            setPageLoadingState(false);
+
+            window.clearTimeout(cleanupTimer);
+            cleanupTimer = window.setTimeout(function () {
+              if (runId !== activeRunId) return;
+              resetLoader();
+            }, 150);
+          }, remaining);
+        }
+
+        function shouldHandleLinkClick(event, link) {
+          if (!link) return false;
+          if (event.defaultPrevented) return false;
+          if (event.button !== 0) return false;
+          if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey)
+            return false;
+          if (link.target && link.target !== "_self") return false;
+          if (link.hasAttribute("download")) return false;
+
+          var href = link.getAttribute("href");
+          if (!href || href.startsWith("#")) return false;
+
+          var url = null;
+          try {
+            url = new URL(link.href, window.location.href);
+          } catch (error) {
+            return false;
+          }
+
+          if (url.origin !== window.location.origin) return false;
+          if (
+            url.pathname === window.location.pathname &&
+            url.search === window.location.search
+          )
+            return false;
+
+          return true;
+        }
+
+        function handleLinkClick(event) {
+          var link = event.currentTarget;
+          if (!shouldHandleLinkClick(event, link)) return;
+
+          saveScrollPosition();
+          startLoader();
+        }
+
+        function setupLinkListeners() {
+          var links = document.querySelectorAll("a[href]");
+          links.forEach(function (link) {
+            if (link.__routeLoaderBound) return;
+
+            var href = link.getAttribute("href");
+            if (!href || href.startsWith("#")) return;
+
+            var url = null;
+            try {
+              url = new URL(link.href, window.location.href);
+            } catch (error) {
+              return;
+            }
+
+            if (url.origin !== window.location.origin) return;
+
+            link.addEventListener("click", handleLinkClick);
+            link.__routeLoaderBound = true;
+          });
+        }
+
+        function handlePageLoad() {
+          refresh();
+          
+          // Prevent visual jump during scroll restoration
+          var originalOverflow = document.documentElement.style.overflow;
+          document.documentElement.style.overflow = 'hidden';
+          
+          restoreScrollPosition();
+          updateScrollProgress();
+          setupLinkListeners();
+          
+          // Restore overflow after a brief delay
+          setTimeout(function() {
+            document.documentElement.style.overflow = originalOverflow;
+          }, 50);
+          
+          if (activeRunId) {
+            var runId = activeRunId;
+            waitForPageReady().finally(function () {
+              completeLoader(runId);
+            });
+          }
+        }
+
+        try {
+          if ("scrollRestoration" in window.history) {
+            window.history.scrollRestoration = "manual";
+          }
+        } catch (error) {}
+
+        refresh();
+        updateScrollProgress();
+        window.addEventListener("scroll", updateScrollProgress, {
+          passive: true,
+        });
+        window.addEventListener("resize", updateScrollProgress, {
+          passive: true,
+        });
+
+        if (document.readyState === "loading") {
+          document.addEventListener("DOMContentLoaded", setupLinkListeners);
+        } else {
+          setupLinkListeners();
+        }
+        document.addEventListener("astro:page-load", handlePageLoad);
+
+        // Fallback: catch any missed clicks on internal links
+        document.addEventListener("click", function (event) {
+          var link =
+            event.target instanceof Element
+              ? event.target.closest("a[href]")
+              : null;
+          if (!link) return;
+          if (link.__routeLoaderBound) return; // Already handled
+
+          if (!shouldHandleLinkClick(event, link)) return;
+
+          saveScrollPosition();
+          startLoader();
+        }, true);
+
+        window.__portfolioRouteEnhancer = {
+          refresh: refresh,
+        };
+      })();
+    </script>
   </body>
 </html>

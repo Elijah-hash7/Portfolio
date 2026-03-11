@@ -16,6 +16,20 @@ export default defineConfig({
         '@icons': new URL('./src/components/icons', import.meta.url).pathname
       }
     },
-    plugins: [tailwindcss()]
+    plugins: [tailwindcss()],
+    define: {
+      global: 'globalThis'
+    },
+    server: {
+      hmr: {
+        overlay: false
+      }
+    },
+    build: {
+      minify: false
+    },
+    esbuild: {
+      jsx: 'automatic'
+    }
   }
 });
