@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/spotify-last-played.json",
+      "destination": "/api/spotify-now-playing"
+    }
+  ]
+}
