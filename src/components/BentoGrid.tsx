@@ -184,10 +184,34 @@ function CardMantra() {
 
 function CardNowPlaying() {
   const [loaded, setLoaded] = useState(false);
+  const [track, setTrack] = useState<{
+    title: string;
+    artist: string;
+    albumArt: string;
+    songUrl: string;
+    playedAt: string | null;
+    isPlaying: boolean;
+  } | null>(null);
 
   useEffect(() => {
     const timer = window.setTimeout(() => setLoaded(true), 260);
     return () => window.clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    fetch('/api/spotify-last-played.json')
+      .then((response) => response.json())
+      .then((data) => {
+        if (cancelled || !data || data.error) return;
+        setTrack(data);
+      })
+      .catch(() => {});
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   if (!loaded) {
@@ -206,12 +230,30 @@ function CardNowPlaying() {
     );
   }
 
+  if (!track) {
+    return (
+      <div className="eg-playing" aria-label="Spotify last played unavailable">
+        <Pill icon={SpotifyIcon} label="Last Played" />
+
+        <div className="eg-playing-content">
+          <div className="eg-album-wrap">
+            <div className="eg-album-img motion-skeleton" />
+          </div>
+          <div className="eg-playing-info">
+            <p className="eg-playing-title">Spotify unavailable</p>
+            <p className="eg-playing-artist">Connect your Spotify account</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <a
-      href="https://open.spotify.com/"
+      href={track.songUrl}
       target="_blank"
       rel="noopener noreferrer"
-      aria-label="Open Spotify"
+      aria-label={`Open ${track.title} on Spotify`}
       className="eg-playing"
     >
       <Pill icon={SpotifyIcon} label="Last Played" />
@@ -219,14 +261,15 @@ function CardNowPlaying() {
       <div className="eg-playing-content">
         <div className="eg-album-wrap">
           <img
-            src="/album-art/late-night.png"
-            alt="Late Nights In Paris"
+            src={track.albumArt}
+            alt={track.title}
             className="eg-album-img"
           />
+          {track.isPlaying ? <span className="eg-album-pulse" aria-hidden="true" /> : null}
         </div>
         <div className="eg-playing-info">
-          <p className="eg-playing-title">Late Nights In Paris</p>
-          <p className="eg-playing-artist">JAZ DONELL, 2JAYZ</p>
+          <p className="eg-playing-title">{track.title}</p>
+          <p className="eg-playing-artist">{track.artist}</p>
         </div>
       </div>
     </a>
@@ -445,6 +488,32 @@ function CardGithub() {
     : null;
   const contributionText = `${total.toLocaleString()} contributions · last 1 year`;
   const isLoading = ghData === null;
+  const tooltipPosition = (() => {
+    if (!tooltip || typeof window === 'undefined') return null;
+
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+    const horizontalPadding = 8;
+    const verticalPadding = 8;
+    const estimatedWidth = Math.min(
+      Math.max(140, tooltip.text.length * 7 + 24),
+      viewportWidth - horizontalPadding * 2,
+    );
+    const estimatedHeight = viewportWidth < 640 ? 56 : 32;
+
+    return {
+      left: Math.max(
+        horizontalPadding,
+        Math.min(tooltip.x + 12, viewportWidth - estimatedWidth - horizontalPadding),
+      ),
+      top: Math.max(
+        verticalPadding,
+        Math.min(tooltip.y - 36, viewportHeight - estimatedHeight - verticalPadding),
+      ),
+      maxWidth: viewportWidth < 640 ? viewportWidth - horizontalPadding * 2 : 260,
+      whiteSpace: viewportWidth < 640 ? 'normal' as const : 'nowrap' as const,
+    };
+  })();
 
   return (
     <div className="eg-github">
@@ -495,14 +564,15 @@ function CardGithub() {
         <span className="eg-github-last">{lastText ? `Last pushed · ${lastText}` : "Last pushed · —"}</span>
       </div>
 
-      {tooltip && typeof document !== 'undefined' && createPortal(
+      {tooltip && tooltipPosition && typeof document !== 'undefined' && createPortal(
         <div style={{
           position: "fixed", zIndex: 9999, pointerEvents: "none",
-          left: tooltip.x + 12, top: tooltip.y - 36,
+          left: tooltipPosition.left, top: tooltipPosition.top,
           padding: "6px 10px", borderRadius: 8,
           background: "#0d1a0e", border: "1px solid rgba(190,242,100,0.25)",
           color: "#bef264", fontFamily: "var(--font-mono)", fontSize: 10,
-          whiteSpace: "nowrap", boxShadow: "0 4px 20px rgba(0,0,0,0.7)",
+          whiteSpace: tooltipPosition.whiteSpace, maxWidth: tooltipPosition.maxWidth,
+          overflowWrap: "break-word", boxShadow: "0 4px 20px rgba(0,0,0,0.7)",
         }}>
           {tooltip.text}
         </div>,
@@ -647,6 +717,7 @@ export default function BentoGrid() {
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
+    const desktopPointerQuery = window.matchMedia('(hover: hover) and (pointer: fine)');
     const cards = Array.from(el.getElementsByClassName('eg-card') as HTMLCollectionOf<HTMLElement>).map((card) => ({
       element: card,
       x: 0,
@@ -667,6 +738,7 @@ export default function BentoGrid() {
     };
 
     const onMove = (event: MouseEvent) => {
+      if (!desktopPointerQuery.matches) return;
       cards.forEach((card) => {
         const rect = card.element.getBoundingClientRect();
         card.targetX = event.clientX - rect.left;
@@ -763,11 +835,13 @@ export default function BentoGrid() {
   background: radial-gradient(500px circle at var(--mx,50%) var(--my,50%), rgba(190,242,100,0.07), transparent 55%);
   z-index: 3;
 }
-.eg-card:hover::before { opacity: 1; }
-.eg-card:hover {
-  box-shadow: 0 0 0 1px rgba(190,242,100,0.18), 0 20px 60px rgba(0,0,0,0.7);
-  transform: translateY(-6px) scale(1.02);
-  transition-delay: 0ms !important;
+@media (hover: hover) and (pointer: fine) {
+  .eg-card:hover::before { opacity: 1; }
+  .eg-card:hover {
+    box-shadow: 0 0 0 1px rgba(190,242,100,0.18), 0 20px 60px rgba(0,0,0,0.7);
+    transform: translateY(-6px) scale(1.02);
+    transition-delay: 0ms !important;
+  }
 }
 .eg-card-inner {
   position: absolute; inset: 1px;

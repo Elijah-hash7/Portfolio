@@ -96,6 +96,25 @@ function ProjectCard({ project, index, isVisible }: {
     const [tagsOpen, setTagsOpen] = useState(false);
     const [githubHovered, setGHovered] = useState(false);
     const [linkHovered, setLHovered] = useState(false);
+    const [hoverEnabled, setHoverEnabled] = useState(false);
+
+    useEffect(() => {
+        const query = window.matchMedia('(hover: hover) and (pointer: fine)');
+        const updateHoverState = (matches: boolean) => {
+            setHoverEnabled(matches);
+            if (!matches) {
+                setHovered(false);
+                setGHovered(false);
+                setLHovered(false);
+            }
+        };
+
+        updateHoverState(query.matches);
+        const onChange = (event: MediaQueryListEvent) => updateHoverState(event.matches);
+        query.addEventListener('change', onChange);
+
+        return () => query.removeEventListener('change', onChange);
+    }, []);
 
     const VISIBLE = 3;
     const extra = project.tags.length - VISIBLE;
@@ -103,7 +122,7 @@ function ProjectCard({ project, index, isVisible }: {
     return (
         <div
             className={`ps-card${isVisible ? ' is-revealed' : ''}`}
-            onMouseEnter={() => setHovered(true)}
+            onMouseEnter={() => hoverEnabled && setHovered(true)}
             onMouseLeave={() => setHovered(false)}
             style={{
                 position: 'relative',
@@ -202,6 +221,7 @@ function ProjectCard({ project, index, isVisible }: {
                                 transition: 'all 0.2s ease', whiteSpace: 'nowrap',
                             }}
                             onMouseEnter={e => {
+                                if (!hoverEnabled) return;
                                 (e.currentTarget as HTMLElement).style.background = 'rgba(190,242,100,0.12)';
                                 (e.currentTarget as HTMLElement).style.borderColor = 'rgba(190,242,100,0.45)';
                             }}
@@ -244,7 +264,7 @@ function ProjectCard({ project, index, isVisible }: {
                     <a
                         href={project.github}
                         target="_blank" rel="noopener noreferrer"
-                        onMouseEnter={() => setGHovered(true)}
+                        onMouseEnter={() => hoverEnabled && setGHovered(true)}
                         onMouseLeave={() => setGHovered(false)}
                         title="View source on GitHub"
                         style={{
@@ -265,7 +285,7 @@ function ProjectCard({ project, index, isVisible }: {
                         href={project.link}
                         target={project.link.startsWith('http') ? '_blank' : undefined}
                         rel={project.link.startsWith('http') ? 'noopener noreferrer' : undefined}
-                        onMouseEnter={() => setLHovered(true)}
+                        onMouseEnter={() => hoverEnabled && setLHovered(true)}
                         onMouseLeave={() => setLHovered(false)}
                         style={{
                             display: 'flex', alignItems: 'center', gap: '0.5rem',
@@ -383,9 +403,11 @@ export default function ProjectSection() {
                     margin-left: auto;
                     transition: border-color 0.2s, color 0.2s;
                 }
-                .ps-header-cta:hover {
-                    border-color: rgba(255,255,255,0.4);
-                    color: rgba(255,255,255,1);
+                @media (hover: hover) and (pointer: fine) {
+                    .ps-header-cta:hover {
+                        border-color: rgba(255,255,255,0.4);
+                        color: rgba(255,255,255,1);
+                    }
                 }
 
                 /* ─── GRID ────────────────────────────────── */
@@ -424,8 +446,10 @@ export default function ProjectSection() {
                 .ps-card:last-child {
                     border-right: 1px solid rgba(255,255,255,0.08);
                 }
-                .ps-card:hover {
-                    transform: translateY(-6px) scale(1.01);
+                @media (hover: hover) and (pointer: fine) {
+                    .ps-card:hover {
+                        transform: translateY(-6px) scale(1.01);
+                    }
                 }
                 .ps-meta  { margin-bottom: 1.6rem; }
                 .ps-title { font-size: clamp(1.6rem, 2.5vw, 2.1rem); margin-bottom: 1.2rem; }

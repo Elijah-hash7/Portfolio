@@ -48,6 +48,25 @@ function ProjectCard({ project, index }: { project: ProjectData; index: number }
   const [ghHovered, setGHovered] = useState(false);
   const [linkHovered, setLHovered] = useState(false);
   const [detailsExpanded, setDetailsExpanded] = useState(false);
+  const [hoverEnabled, setHoverEnabled] = useState(false);
+
+  useEffect(() => {
+    const query = window.matchMedia('(hover: hover) and (pointer: fine)');
+    const updateHoverState = (matches: boolean) => {
+      setHoverEnabled(matches);
+      if (!matches) {
+        setHovered(false);
+        setGHovered(false);
+        setLHovered(false);
+      }
+    };
+
+    updateHoverState(query.matches);
+    const onChange = (event: MediaQueryListEvent) => updateHoverState(event.matches);
+    query.addEventListener('change', onChange);
+
+    return () => query.removeEventListener('change', onChange);
+  }, []);
 
   const s = STATUS_STYLES[project.status];
   const extra = project.tags.length - VISIBLE_TAGS;
@@ -56,7 +75,7 @@ function ProjectCard({ project, index }: { project: ProjectData; index: number }
   return (
         <div
             className="ap-card"
-            onMouseEnter={() => setHovered(true)}
+            onMouseEnter={() => hoverEnabled && setHovered(true)}
             onMouseLeave={() => setHovered(false)}
             style={{
         position: 'relative',
@@ -251,6 +270,7 @@ function ProjectCard({ project, index }: { project: ProjectData; index: number }
                   transition: 'all 0.2s ease',
                 }}
                 onMouseEnter={e => {
+                  if (!hoverEnabled) return;
                   (e.currentTarget as HTMLElement).style.background = 'rgba(190,242,100,0.12)';
                   (e.currentTarget as HTMLElement).style.borderColor = 'rgba(190,242,100,0.45)';
                 }}
@@ -286,7 +306,7 @@ function ProjectCard({ project, index }: { project: ProjectData; index: number }
             {project.github && (
               <a
                 href={project.github} target="_blank" rel="noopener noreferrer"
-                onMouseEnter={() => setGHovered(true)}
+                onMouseEnter={() => hoverEnabled && setGHovered(true)}
                 onMouseLeave={() => setGHovered(false)}
                 style={{
                   display: 'inline-flex', alignItems: 'center', gap: '0.45rem',
@@ -303,7 +323,7 @@ function ProjectCard({ project, index }: { project: ProjectData; index: number }
             {project.link ? (
               <a
                 href={project.link} target="_blank" rel="noopener noreferrer"
-                onMouseEnter={() => setLHovered(true)}
+                onMouseEnter={() => hoverEnabled && setLHovered(true)}
                 onMouseLeave={() => setLHovered(false)}
                 style={{
                   display: 'flex', alignItems: 'center', gap: '0.5rem',
@@ -412,7 +432,9 @@ export default function AllProjects() {
                     margin-bottom: 1.5rem;
                     transition: color 0.2s ease;
                 }
-                .ap-back:hover { color: rgba(255,255,255,0.7); }
+                @media (hover: hover) and (pointer: fine) {
+                    .ap-back:hover { color: rgba(255,255,255,0.7); }
+                }
                 .ap-page-title {
                     font-family: 'Bebas Neue', 'Impact', sans-serif;
                     font-size: clamp(2.5rem, 6vw, 4rem);
@@ -451,9 +473,11 @@ export default function AllProjects() {
                     cursor: pointer;
                     transition: all 0.2s ease;
                 }
-                .ap-filter-btn:hover {
-                    color: rgba(255,255,255,0.8);
-                    border-color: rgba(255,255,255,0.3);
+                @media (hover: hover) and (pointer: fine) {
+                    .ap-filter-btn:hover {
+                        color: rgba(255,255,255,0.8);
+                        border-color: rgba(255,255,255,0.3);
+                    }
                 }
                 .ap-filter-btn.active {
                     background: rgba(255,255,255,0.06);
@@ -518,8 +542,10 @@ export default function AllProjects() {
                     cursor: pointer;
                     transition: color 0.2s ease;
                 }
-                .ap-more-btn:hover {
-                    color: #bef264;
+                @media (hover: hover) and (pointer: fine) {
+                    .ap-more-btn:hover {
+                        color: #bef264;
+                    }
                 }
                 .ap-card-footer {
                     padding-top: 1.25rem;
